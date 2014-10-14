@@ -38,7 +38,7 @@ void* consumer(void *pid)
 			pthread_cond_signal(&not_full_condvar);
 		}
 		pthread_mutex_unlock(&rb_mutex);
-		sleep(1);
+		sleep(2);
 	}
 	return *pid;
 }
