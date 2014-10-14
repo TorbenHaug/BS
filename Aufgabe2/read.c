@@ -1,4 +1,8 @@
-void* read_rb(void *pid)
+// Unneccesary, please use consumer
+
+
+
+/*void* read_rb(void *pid)
 {
 	int i = 0;
 	printf("Start Lesen; %d: \n", *(int*)pid);
@@ -32,4 +36,4 @@ void* read_rb(void *pid)
 		sleep(1);
 	}
 	return (NULL);
-}
+}*/
