@@ -47,9 +47,9 @@ int main(int argc, char* argv[])
 	p_rb -> p_out = p_start;
 	p_rb -> count = 0;
 	printf("Counter value %d\n", p_rb ->count);
-	pthread_create(&threads[0], NULL, …, (void *)thread_id);
-	pthread_create(&threads[1], NULL, …, (void *)&thread_id[1]);
-	pthread_create(&threads[2], NULL, …, (void *) &thread_id[2]);
+	pthread_create(&threads[0], NULL, /*TODO*/, (void *)thread_id);
+	pthread_create(&threads[1], NULL, /*TODO*/, (void *)&thread_id[1]);
+	pthread_create(&threads[2], NULL, /*TODO*/, (void *) &thread_id[2]);
 	
 	// TODO
 
