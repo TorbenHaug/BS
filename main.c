@@ -8,13 +8,13 @@ pthread_mutex_t rb_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 pthread_cond_t not_empty_condvar = PTHREAD_COND_INITIALIZER;
 pthread_cond_t not_full_condvar = PTHREAD_COND_INITIALIZER;
-pthread_cond_t prod_1_stopped = PTHREAD_COND_INITIALIZER;
-pthread_cond_t prod_2_stopped = PTHREAD_COND_INITIALIZER;
-pthread_cond_t cons_stopped = PTHREAD_COND_INITIALIZER;
+pthread_cond_t prod_1_restart = PTHREAD_COND_INITIALIZER;
+pthread_cond_t prod_2_restart = PTHREAD_COND_INITIALIZER;
+pthread_cond_t cons_restart = PTHREAD_COND_INITIALIZER;
 
-int prod_1_done = 0;
-int prod_2_done = 0;
-int cons_done = 0;
+int prod_1_stopped = 0;
+int prod_2_stopped = 0;
+int cons_stopped = 0;
 
 int thread_id[4] = {0,1,2,3};
 typedef struct {
