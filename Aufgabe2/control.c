@@ -15,21 +15,25 @@
 void usage();
 void * control(void *pid);
 
-pthread_cond_t prod_1_restart = PTHREAD_COND_INITIALIZER;
-pthread_cond_t prod_2_restart = PTHREAD_COND_INITIALIZER;
-pthread_cond_t cons_restart   = PTHREAD_COND_INITIALIZER;
-pthread_t      test_thread;
+// nur debug weise hier definiert
+pthread_cond_t   prod_1_restart = PTHREAD_COND_INITIALIZER;
+pthread_cond_t   prod_2_restart = PTHREAD_COND_INITIALIZER;
+pthread_cond_t   cons_restart   = PTHREAD_COND_INITIALIZER;
+pthread_t        test_thread;
 
+//dito
 int prod_1_stopped = 0;
 int prod_2_stopped = 0;
 int cons_stopped   = 0;
 
 int main() {
-	pthread_create(&test_thread, SCHED_FIFO, control(1), 1);
+int x = 1337;
+
+	pthread_create(&test_thread, SCHED_FIFO, control, &x);
 	return EXIT_SUCCESS;
 }
 
-void* control(void *pid) {
+void *control(void *pid) {
 	int run = 1;
 	char code;
 
@@ -46,7 +50,7 @@ void* control(void *pid) {
 				}
 				break;
 			case '2':
-				// Producer 1 toggle
+				// Producer 2 toggle
 				if (!prod_2_stopped) {
 					pthread_cond_signal(&prod_2_restart);
 					prod_2_stopped = 0;
@@ -56,7 +60,7 @@ void* control(void *pid) {
 				break;
 			case 'c':
 			case 'C':
-				// Producer 1 toggle
+				// Consumer toggle
 				if (!cons_stopped) {
 					pthread_cond_signal(&cons_restart);
 					cons_stopped = 0;
@@ -66,9 +70,11 @@ void* control(void *pid) {
 				break;
 			case 'q':
 			case 'Q':
-				// Threads terminieren
+				// Threads terminate
+        run = 0;
 				break;
 			case 'h':
+      // Show help
 				usage();
 				break;
 			default:
@@ -77,7 +83,7 @@ void* control(void *pid) {
 
 	} while (run);
 
-//	return *pid;
+	return NULL;
 }
 
 
