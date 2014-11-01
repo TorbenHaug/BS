@@ -49,6 +49,7 @@ void* producer(void *pid, int *restart, int *prod_stopped){
 		}
 		// belegung des Puffers erhöhen
 		(p_rb -> count)++;
+		printf("Producer : %d: added '%c' to the buffer.", *(int*)pid, z_var);
 		// Signal an den Consumer, dass der Puffer gefüllt ist
 		if(p_rb -> count != 0)
 		{
@@ -59,5 +60,5 @@ void* producer(void *pid, int *restart, int *prod_stopped){
 		// Thread 3 Secunden anhalten
 		sleep(3);
 	}
-	return *pid;
+	return NULL;
 }

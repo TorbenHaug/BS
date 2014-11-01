@@ -8,6 +8,8 @@
 
 #ifndef CONSUMER_H_
 #define CONSUMER_H_
+	#include <pthread.h>
+	#include <stdio.h>
 
 	void* consumer(void *pid);
 	#ifndef MAX

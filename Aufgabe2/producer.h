@@ -7,6 +7,9 @@
 
 #ifndef PRODUCER_H_
 #define PRODUCER_H_
+	#include <pthread.h>
+	#include <stdio.h>
+
 	void* p_1_w(void *pid);
 	void* p_2_w(void *pid);
 	#ifndef MAX

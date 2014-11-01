@@ -40,5 +40,5 @@ void* consumer(void *pid)
 		pthread_mutex_unlock(&rb_mutex);
 		sleep(2);
 	}
-	return *pid;
+	return NULL;
 }
