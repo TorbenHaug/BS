@@ -1,4 +1,4 @@
-void* write_c(void *pid)
+/* void* write_c(void *pid)
 {
 	int i = 0;
 	int z_var = 0;
@@ -34,4 +34,4 @@ void* write_c(void *pid)
 		sleep(1);
 	}
 	return (NULL);
-}
+}*/
