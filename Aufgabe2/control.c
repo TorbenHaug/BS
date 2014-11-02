@@ -8,13 +8,13 @@
  */
 #include "control.h"
 
-
 void *control(void *pid) {
 	int run = 1;
 	char code;
 
 	do {
 		code = getchar();
+
 		switch (code) {
 			case '1':
 				// Producer 1 toggle
@@ -46,11 +46,14 @@ void *control(void *pid) {
 				break;
 			case 'q':
 			case 'Q':
-				// Threads terminate
-        run = 0;
+				// terminate threads
+				pthread_cancel(thread_id[1]); // prod 1
+				pthread_cancel(thread_id[2]); // prod 2
+				pthread_cancel(thread_id[3]); // consumer
+				run = 0;
 				break;
 			case 'h':
-      // Show help
+				// Show help
 				usage();
 				break;
 			default:
@@ -64,5 +67,9 @@ void *control(void *pid) {
 
 // Hilfe ausgeben
 void usage() {
-
+	printf("1       Toggle producer 1 on/off\n");
+	printf("2       Toggle producer 2 on/off\n");
+	printf("c | C   Toggle consumer on/off\n");
+	printf("q | Q   Terminates all threads\n");
+	printf("h       Prints this help page\n");
 }

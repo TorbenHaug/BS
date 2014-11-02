@@ -31,6 +31,7 @@
 		EXTERN int prod_2_stopped;
 		EXTERN int cons_stopped;
 		EXTERN rb *p_rb;
+		EXTERN pthread_t threads[4];
 		EXTERN int thread_id[4];
 	#endif
 	void* p_1_w(void *pid);

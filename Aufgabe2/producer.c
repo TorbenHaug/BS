@@ -30,10 +30,10 @@ void* producer(void *pid, pthread_cond_t *restart, int *prod_stopped, char begin
 		pthread_mutex_lock(&rb_mutex);
 
 		//prüfen, ob der Speicher voll ist, oder ob der producer angehalten ist
-		while((p_rb -> p_in == p_rb -> p_out && p_rb ->count == MAX) || *prod_stopped)
+		while((p_rb -> p_in == p_rb -> p_out && p_rb -> count == MAX) || *prod_stopped)
 		{
 			// prüfen, welche von beiden bedingungen zutrifft
-			if (p_rb -> p_in == p_rb -> p_out && p_rb ->count == MAX){
+			if (p_rb -> p_in == p_rb -> p_out && p_rb -> count == MAX){
 				pthread_cond_wait(&not_full_condvar, &rb_mutex);
 			}
 			else if(*prod_stopped){
@@ -45,7 +45,7 @@ void* producer(void *pid, pthread_cond_t *restart, int *prod_stopped, char begin
 		//printf("lege in puffer: %c", z_var);
 		*(p_rb -> p_in) = z_var;
 		// input zeiger vorschieben
-		(p_rb -> p_in)++ ;
+		(p_rb -> p_in)++;
 		// zirkulien des Zeigers garantieren
 		if((p_rb -> p_in) > p_end)
 		{

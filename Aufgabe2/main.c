@@ -6,8 +6,6 @@
 
 pthread_mutex_t rb_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-// TODO
-
 pthread_cond_t not_empty_condvar = PTHREAD_COND_INITIALIZER;
 pthread_cond_t not_full_condvar = PTHREAD_COND_INITIALIZER;
 pthread_cond_t prod_1_restart = PTHREAD_COND_INITIALIZER;
@@ -19,6 +17,7 @@ int prod_2_stopped = 0;
 int cons_stopped = 0;
 
 int thread_id[4] = {0,1,2,3};
+pthread_t threads[4];
 
 rb x = { {0}, NULL, NULL, 0};
 rb *p_rb = &x;
@@ -27,7 +26,6 @@ rb *p_rb = &x;
 int main(int argc, char* argv[])
 {
 	int i;
-	pthread_t threads[4];
 	printf("Start des Beispiels \n");
 	//printf("Argumente verfuegbar: ARGC\n", 3*argc);
 	
