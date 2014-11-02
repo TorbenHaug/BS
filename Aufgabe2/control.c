@@ -67,9 +67,13 @@ void *control(void *pid) {
 
 // Hilfe ausgeben
 void usage() {
-	printf("1       Toggle producer 1 on/off\n");
-	printf("2       Toggle producer 2 on/off\n");
-	printf("c | C   Toggle consumer on/off\n");
-	printf("q | Q   Terminates all threads\n");
-	printf("h       Prints this help page\n");
+	printf(" --------CONTROLLER HELP-----------\n");
+	printf("# Key   | Description              #\n");
+	printf("#-------|--------------------------#\n");
+	printf("# 1     | Toggle producer 1 on/off #\n");
+	printf("# 2     | Toggle producer 2 on/off #\n");
+	printf("# c | C | Toggle consumer on/off   #\n");
+	printf("# q | Q | Terminate all threads    #\n");
+	printf("# h     | Prints this help page    #\n");
+	printf(" ----------------------------------\n");
 }
