@@ -22,6 +22,7 @@ void* consumer(void *pid)
 		(p_rb -> count)--;
 		// Ältestes Zeichen ausgeben
 		printf("%c:", *(p_rb -> p_out));
+		fflush(stdout);
 		//Prüfen, ob es das 30gste zeichen war
 		if ((i % 30) == 0){
 			printf("\n");

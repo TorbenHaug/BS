@@ -38,6 +38,7 @@ void* producer(void *pid, pthread_cond_t *restart, int *prod_stopped){
 			}
 			else if(*prod_stopped){
 				pthread_cond_wait(restart, &rb_mutex);
+
 			}
 		}
 		// in den puffer Schreiben

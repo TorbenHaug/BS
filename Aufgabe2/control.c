@@ -10,17 +10,15 @@
 
 
 void *control(void *pid) {
-	/*int run = 1;
+	int run = 1;
 	char code;
 
 	do {
-		printf("Warte auf input");
 		code = getchar();
-		printf("Char bekommen: %c", code);
 		switch (code) {
 			case '1':
 				// Producer 1 toggle
-				if (!prod_1_stopped) {
+				if (prod_1_stopped) {
 					pthread_cond_signal(&prod_1_restart);
 					prod_1_stopped = 0;
 				} else {
@@ -29,7 +27,7 @@ void *control(void *pid) {
 				break;
 			case '2':
 				// Producer 2 toggle
-				if (!prod_2_stopped) {
+				if (prod_2_stopped) {
 					pthread_cond_signal(&prod_2_restart);
 					prod_2_stopped = 0;
 				} else {
@@ -39,7 +37,7 @@ void *control(void *pid) {
 			case 'c':
 			case 'C':
 				// Consumer toggle
-				if (!cons_stopped) {
+				if (cons_stopped) {
 					pthread_cond_signal(&cons_restart);
 					cons_stopped = 0;
 				} else {
@@ -60,7 +58,6 @@ void *control(void *pid) {
 		}
 
 	} while (run);
-*/
 	return NULL;
 }
 
