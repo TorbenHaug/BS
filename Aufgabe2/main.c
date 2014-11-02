@@ -1,7 +1,9 @@
-#include <unistd.h>
-#include <stdio.h>
-#include <pthread.h>
-#define MAX 16
+#define MODULO
+#include "main.h"
+#include "consumer.h"
+#include "producer.h"
+#include "control.h"
+
 pthread_mutex_t rb_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // TODO
@@ -17,22 +19,10 @@ int prod_2_stopped = 0;
 int cons_stopped = 0;
 
 int thread_id[4] = {0,1,2,3};
-typedef struct {
-	int buffer[MAX];
-	int *p_in;
-	int *p_out;
-	int count;
-}rb;
+
 rb x = { {0}, NULL, NULL, 0};
 rb *p_rb = &x;
 
-#define p_start (int *)(p_rb -> buffer)
-#define p_end (int *)((p_rb -> buffer) + MAX-1)
-
-void* p_1_w(void *pid);
-void* p_2_w(void *pid);
-void* consumer(void *pid);
-void* control(void *pid);
 
 int main(int argc, char* argv[])
 {
@@ -47,7 +37,7 @@ int main(int argc, char* argv[])
 	p_rb -> p_out = p_start;
 	p_rb -> count = 0;
 	printf("Counter value %d\n", p_rb ->count);
-	pthread_create(&threads[0], NULL, control, (void *)thread_id);
+	pthread_create(&threads[0], NULL, control, (void *)&thread_id[0]);
 	pthread_create(&threads[1], NULL, p_1_w, (void *)&thread_id[1]);
 	pthread_create(&threads[2], NULL, p_2_w, (void *) &thread_id[2]);
 	pthread_create(&threads[3], NULL, consumer, (void *) &thread_id[3]);

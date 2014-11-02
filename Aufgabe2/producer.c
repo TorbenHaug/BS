@@ -1,15 +1,7 @@
 #include "producer.h"
 #include "rb.h"
 
-extern pthread_cond_t not_empty_condvar;
-extern pthread_cond_t not_full_condvar;
-extern pthread_mutex_t rb_mutex;
-extern pthread_cond_t prod_1_restart;
-extern pthread_cond_t prod_2_restart;
-extern int prod_1_stopped;
-extern int prod_2_stopped;
-extern rb *p_rb;
-
+void* producer(void *pid, pthread_cond_t *restart, int *prod_stopped);
 
 void* p_1_w(void *pid){
 	return producer(pid, &prod_1_restart, &prod_1_stopped);
@@ -19,7 +11,7 @@ void* p_2_w(void *pid){
 	return producer(pid,&prod_2_restart, &prod_2_stopped);
 }
 
-void* producer(void *pid, int *restart, int *prod_stopped){
+void* producer(void *pid, pthread_cond_t *restart, int *prod_stopped){
 	int i = 0;
 	int z_var = 96;
 
@@ -38,17 +30,18 @@ void* producer(void *pid, int *restart, int *prod_stopped){
 		pthread_mutex_lock(&rb_mutex);
 
 		//prüfen, ob der Speicher voll ist, oder ob der producer angehalten ist
-		while((p_rb -> p_in == p_rb -> p_out && p_rb ->count == MAX) || prod_stopped)
+		while((p_rb -> p_in == p_rb -> p_out && p_rb ->count == MAX) || *prod_stopped)
 		{
 			// prüfen, welche von beiden bedingungen zutrifft
 			if (p_rb -> p_in == p_rb -> p_out && p_rb ->count == MAX){
 				pthread_cond_wait(&not_full_condvar, &rb_mutex);
 			}
-			else if(prod_1_stopped){
+			else if(*prod_stopped){
 				pthread_cond_wait(restart, &rb_mutex);
 			}
 		}
 		// in den puffer Schreiben
+		//printf("lege in puffer: %c", z_var);
 		*(p_rb -> p_in) = z_var;
 		// input zeiger vorschieben
 		(p_rb -> p_in)++ ;
@@ -59,7 +52,7 @@ void* producer(void *pid, int *restart, int *prod_stopped){
 		}
 		// belegung des Puffers erhöhen
 		(p_rb -> count)++;
-		printf("Producer : %d: added '%c' to the buffer.", *(int*)pid, z_var);
+		//printf("Producer : %d: added '%c' to the buffer.", *(int*)pid, z_var);
 		// Signal an den Consumer, dass der Puffer gefüllt ist
 		if(p_rb -> count != 0)
 		{

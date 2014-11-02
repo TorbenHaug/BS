@@ -1,12 +1,4 @@
 #include "consumer.h"
-#include "rb.h"
-
-extern pthread_cond_t not_empty_condvar;
-extern pthread_cond_t not_full_condvar;
-extern pthread_mutex_t rb_mutex;
-extern pthread_cond_t cons_restart;
-extern int cons_stopped;
-extern rb *p_rb;
 
 void* consumer(void *pid)
 {
@@ -17,7 +9,7 @@ void* consumer(void *pid)
 		i++;
 		pthread_mutex_lock(&rb_mutex);
 		//Überprüfen, ob alle Runbedingungen zutreffen.
-		while(p_rb -> count == 0 || !cons_stopped)
+		while(p_rb -> count == 0 || cons_stopped)
 		{
 			//Überprüfen welche Runbedingung nich zutrifft:
 			if (p_rb -> count == 0 ){
@@ -29,7 +21,7 @@ void* consumer(void *pid)
 		}
 		(p_rb -> count)--;
 		// Ältestes Zeichen ausgeben
-		printf("%d:", *(p_rb -> p_out));
+		printf("%c:", *(p_rb -> p_out));
 		//Prüfen, ob es das 30gste zeichen war
 		if ((i % 30) == 0){
 			printf("\n");

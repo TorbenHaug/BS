@@ -6,27 +6,17 @@
  Description : Controller fuer die Tastureingaben-geleitete Threadsteuerung.
  ============================================================================
  */
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <curses.h>
-#include <pthread.h>
 #include "control.h"
 
-extern pthread_cond_t   prod_1_restart;
-extern pthread_cond_t   prod_2_restart;
-extern pthread_cond_t   cons_restart;
-
-extern int prod_1_stopped;
-extern int prod_2_stopped;
-extern int cons_stopped;
 
 void *control(void *pid) {
-	int run = 1;
+	/*int run = 1;
 	char code;
 
 	do {
+		printf("Warte auf input");
 		code = getchar();
+		printf("Char bekommen: %c", code);
 		switch (code) {
 			case '1':
 				// Producer 1 toggle
@@ -70,7 +60,7 @@ void *control(void *pid) {
 		}
 
 	} while (run);
-
+*/
 	return NULL;
 }
 
