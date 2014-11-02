@@ -66,7 +66,7 @@ void *control(void *pid) {
 
 // Hilfe ausgeben
 void usage() {
-	printf(" --------CONTROLLER HELP-----------\n");
+	printf("\n --------CONTROLLER HELP-----------\n");
 	printf("# Key   | Description              #\n");
 	printf("#-------|--------------------------#\n");
 	printf("# 1     | Toggle producer 1 on/off #\n");

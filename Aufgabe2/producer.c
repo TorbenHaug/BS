@@ -15,14 +15,14 @@ void* producer(void *pid, pthread_cond_t *restart, int *prod_stopped, char begin
 	int i = 0;
 	int z_var = beginn - 1;
 
-	printf("Start Schreiben; %d: \n", *(int*)pid);
+	printf("Producer started; %d: \n", *(int*)pid);
 
 	while(1)
 	{
 		i++;
-		// nächstes zu schreibendes Zeichen
+		// naechstes zu schreibendes Zeichen
 		z_var++;
-		//Zirkel garantieren: 'a' = 97, 'z' = 122
+		// Zirkel garantieren: 'a' = 97, 'z' = 122
 		if (z_var > end){
 			z_var = beginn;
 		}

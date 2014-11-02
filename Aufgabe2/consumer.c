@@ -3,15 +3,15 @@
 void* consumer(void *pid)
 {
 	int i = 0;
-	printf("Start Lesen; %d: \n", *(int*)pid);
+	printf("Consumer started; %d: \n", *(int*)pid);
 	while(1)
 	{
 		i++;
 		pthread_mutex_lock(&rb_mutex);
-		//Überprüfen, ob alle Runbedingungen zutreffen.
+		// Überprüfen, ob alle Runbedingungen zutreffen.
 		while(p_rb -> count == 0 || cons_stopped)
 		{
-			//Überprüfen welche Runbedingung nich zutrifft:
+			// Überprüfen welche Runbedingung nich zutrifft:
 			if (p_rb -> count == 0 ){
 				pthread_cond_wait(&not_empty_condvar, &rb_mutex);
 			}
@@ -35,7 +35,7 @@ void* consumer(void *pid)
 		}
 		if(p_rb -> count <= MAX)
 		{
-			//Buffer nicht voll, signalisieren
+			//Buffer nicht voll --> signalisieren
 			pthread_cond_signal(&not_full_condvar);
 		}
 		pthread_mutex_unlock(&rb_mutex);

@@ -29,10 +29,10 @@ void pthread_attr_creator(pthread_attr_t* attr, int prio);
 int main(int argc, char* argv[])
 {
 	int i;
-	printf("# WS14/15 BSP Aufgabe 2 #\n");
+	printf("\n# WS14/15 BSP Aufgabe 2 #\n");
 	printf("#-----------------------#\n");
 	printf("# Press h to print help #\n");
-	printf("#-----------------------#\n");
+	printf("#-----------------------#\n\n");
 	
 	// Ringbuffer initialisieren
 	p_rb -> p_in = p_start;
