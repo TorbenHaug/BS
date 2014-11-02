@@ -11,27 +11,15 @@
 #include <stdlib.h>
 #include <curses.h>
 #include <pthread.h>
+#include "control.h"
 
-void usage();
-void * control(void *pid);
+extern pthread_cond_t   prod_1_restart;
+extern pthread_cond_t   prod_2_restart;
+extern pthread_cond_t   cons_restart;
 
-// nur debug weise hier definiert
-pthread_cond_t   prod_1_restart = PTHREAD_COND_INITIALIZER;
-pthread_cond_t   prod_2_restart = PTHREAD_COND_INITIALIZER;
-pthread_cond_t   cons_restart   = PTHREAD_COND_INITIALIZER;
-pthread_t        test_thread;
-
-//dito
-int prod_1_stopped = 0;
-int prod_2_stopped = 0;
-int cons_stopped   = 0;
-
-int main() {
-int x = 1337;
-
-	pthread_create(&test_thread, SCHED_FIFO, control, &x);
-	return EXIT_SUCCESS;
-}
+extern int prod_1_stopped;
+extern int prod_2_stopped;
+extern int cons_stopped;
 
 void *control(void *pid) {
 	int run = 1;
