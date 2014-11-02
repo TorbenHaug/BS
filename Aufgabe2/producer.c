@@ -1,4 +1,14 @@
 #include "producer.h"
+#include "rb.h"
+
+extern pthread_cond_t not_empty_condvar;
+extern pthread_cond_t not_full_condvar;
+extern pthread_mutex_t rb_mutex;
+extern pthread_cond_t prod_1_restart;
+extern pthread_cond_t prod_2_restart;
+extern int prod_1_stopped;
+extern int prod_2_stopped;
+extern rb *p_rb;
 
 
 void* p_1_w(void *pid){

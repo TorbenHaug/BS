@@ -1,4 +1,12 @@
 #include "consumer.h"
+#include "rb.h"
+
+extern pthread_cond_t not_empty_condvar;
+extern pthread_cond_t not_full_condvar;
+extern pthread_mutex_t rb_mutex;
+extern pthread_cond_t cons_restart;
+extern int cons_stopped;
+extern rb *p_rb;
 
 void* consumer(void *pid)
 {
