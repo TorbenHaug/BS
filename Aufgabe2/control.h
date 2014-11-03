@@ -5,4 +5,4 @@
 	#include "getch.h"
 	void* control(void *pid);
 	void usage();
-#endif // CONtROL_H_
+#endif // CONTROL_H_
