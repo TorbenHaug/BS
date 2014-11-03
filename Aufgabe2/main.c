@@ -25,6 +25,7 @@ void* 		thread_result[4];
 rb x = { {0}, NULL, NULL, 0};
 rb *p_rb = &x;
 
+void pthread_attr_creator(pthread_attr_t* attr, int prio);
 
 int main(int argc, char* argv[])
 {
@@ -39,59 +40,32 @@ int main(int argc, char* argv[])
 
 
 	pthread_attr_t attr1; // 1. attribute
-	struct sched_param my_prio1; // priority vgl. S 48
-
 	pthread_attr_t attr2; // 1. attribute
-	struct sched_param my_prio2; // priority vgl. S 48
-
 	pthread_attr_t attr3; // 1. attribute
-	struct sched_param my_prio3; // priority vgl. S 48
-
 	pthread_attr_t attr4; // 1. attribute
-	struct sched_param my_prio4; // priority vgl. S 48
+	pthread_attr_creator(&attr1, 10);
+	pthread_attr_creator(&attr2, 10);
+	pthread_attr_creator(&attr3, 10);
+	pthread_attr_creator(&attr4, 10);
 
 
-	pthread_attr_init(&attr1); // 2.
-	pthread_attr_setinheritsched(&attr1, PTHREAD_EXPLICIT_SCHED); //Freigabe der Parameteraenderung
-	pthread_attr_setschedpolicy(&attr1, SCHED_FIFO);
-	my_prio1.sched_priority = 10; // 4.
-	pthread_attr_setschedparam(&attr1, &my_prio1);
 	pthread_create(&threads[0], &attr1, control, (void *)&thread_id[0]);
-
-
-	pthread_attr_init(&attr2); // 2.
-	pthread_attr_setinheritsched(&attr2, PTHREAD_EXPLICIT_SCHED); //Freigabe der Parameteraenderung
-	pthread_attr_setschedpolicy(&attr2, SCHED_FIFO);
-	my_prio2.sched_priority = 10; // 4.
-	pthread_attr_setschedparam(&attr2, &my_prio2);
 	pthread_create(&threads[1], &attr2, p_1_w, (void *)&thread_id[1]);
-
-
-	pthread_attr_init(&attr3); // 2.
-	pthread_attr_setinheritsched(&attr3, PTHREAD_EXPLICIT_SCHED); //Freigabe der Parameteraenderung
-	pthread_attr_setschedpolicy(&attr3, SCHED_FIFO);
-	my_prio3.sched_priority = 10; // 4.
-	pthread_attr_setschedparam(&attr3, &my_prio3);
 	pthread_create(&threads[2], &attr3, p_2_w, (void *) &thread_id[2]);
-
-
-	printf("1: %d \n", pthread_attr_init(&attr4)); // 2.
-	printf("2: %d \n", pthread_attr_setinheritsched(&attr4, PTHREAD_EXPLICIT_SCHED)); //Freigabe der Parameteraenderung
-	printf("3: %d \n", pthread_attr_setschedpolicy(&attr4, SCHED_FIFO));
-	my_prio4.sched_priority = 10; // 4.
-	printf("4: %d \n", pthread_attr_setschedparam(&attr4, &my_prio4));
-	printf("5: %d \n", pthread_create(&threads[3], &attr4, consumer, (void *) &thread_id[3]));
-
-
-
-//	pthread_create(&threads[0], NULL, control, (void *)&thread_id[0]);
-//	pthread_create(&threads[1], NULL, p_1_w, (void *)&thread_id[1]);
-//	pthread_create(&threads[2], NULL, p_2_w, (void *) &thread_id[2]);
-//	pthread_create(&threads[3], NULL, consumer, (void *) &thread_id[3]);
+	pthread_create(&threads[3], &attr4, consumer, (void *) &thread_id[3]);
 	
 	for(i = 0; i < 4; i++)
 		pthread_join(threads[i], thread_result[i]);
 
 	printf("Ende nach Join der Threads\n");
 	return 0;
+}
+
+void pthread_attr_creator(pthread_attr_t* attr, int prio){
+	struct sched_param my_prio;
+	pthread_attr_init(attr); // 2.
+	pthread_attr_setinheritsched(attr, PTHREAD_EXPLICIT_SCHED); //Freigabe der Parameteraenderung
+	pthread_attr_setschedpolicy(attr, SCHED_FIFO);
+	my_prio.sched_priority = prio; // 4.
+	pthread_attr_setschedparam(attr, &my_prio);
 }

@@ -7,13 +7,12 @@
  ============================================================================
  */
 #include "control.h"
-
 void *control(void *pid) {
 	int run = 1;
 	char code;
 
 	do {
-		code = getchar();
+		code = getchi();
 
 		switch (code) {
 			case '1':
