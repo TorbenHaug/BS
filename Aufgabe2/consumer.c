@@ -13,10 +13,18 @@ void* consumer(void *pid)
 		{
 			// Überprüfen welche Runbedingung nich zutrifft:
 			if (p_rb -> count == 0 ){
+				if (verbose)
+					printf("Consumer: Ringbuffer empty.\n");
 				pthread_cond_wait(&not_empty_condvar, &rb_mutex);
+				if (verbose)
+					printf("Consumer: Ringbuffer not empty longer.\n");
 			}
 			else if(cons_stopped){
+				if (verbose)
+					printf("Consumer: Stopped by user.\n");
 				pthread_cond_wait(&cons_restart, &rb_mutex);
+				if (verbose)
+					printf("Consumer: Started by user.\n");
 			}
 		}
 		(p_rb -> count)--;

@@ -33,6 +33,7 @@
 		EXTERN rb *p_rb;
 		EXTERN pthread_t threads[4];
 		EXTERN int thread_id[4];
+		EXTERN int verbose;
 	#endif
 	void* p_1_w(void *pid);
 	void* p_2_w(void *pid);

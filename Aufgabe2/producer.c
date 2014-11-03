@@ -34,14 +34,24 @@ void* producer(void *pid, pthread_cond_t *restart, int *prod_stopped, char begin
 		{
 			// prüfen, welche von beiden bedingungen zutrifft
 			if (p_rb -> p_in == p_rb -> p_out && p_rb -> count == MAX){
+				if (verbose)
+					printf("Producer %d: RingBuffer full.\n", *(int*)pid);
 				pthread_cond_wait(&not_full_condvar, &rb_mutex);
+				if (verbose)
+					printf("Producer %d: RingBuffer no longer full.\n", *(int*)pid);
 			}
 			else if(*prod_stopped){
+				if (verbose)
+					printf("Producer %d: Stopped by user.\n", *(int*)pid);
 				pthread_cond_wait(restart, &rb_mutex);
+				if (verbose)
+					printf("Producer %d: Started by user.\n", *(int*)pid);
 
 			}
 		}
 		// in den puffer Schreiben
+		if (verbose)
+				printf("Producer %d: Added sign '%c' to Ringbuffer.\n", *(int*)pid, z_var);
 		//printf("lege in puffer: %c", z_var);
 		*(p_rb -> p_in) = z_var;
 		// input zeiger vorschieben
