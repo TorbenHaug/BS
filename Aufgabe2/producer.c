@@ -1,19 +1,19 @@
 #include "producer.h"
 #include "rb.h"
 
-void* producer(void *pid, pthread_cond_t *restart, int *prod_stopped);
+void* producer(void *pid, pthread_cond_t *restart, int *prod_stopped, char beginn, char end);
 
 void* p_1_w(void *pid){
-	return producer(pid, &prod_1_restart, &prod_1_stopped);
+	return producer(pid, &prod_1_restart, &prod_1_stopped, 'a', 'z');
 }
 
 void* p_2_w(void *pid){
-	return producer(pid,&prod_2_restart, &prod_2_stopped);
+	return producer(pid,&prod_2_restart, &prod_2_stopped, 'A', 'Z');
 }
 
-void* producer(void *pid, pthread_cond_t *restart, int *prod_stopped){
+void* producer(void *pid, pthread_cond_t *restart, int *prod_stopped, char beginn, char end){
 	int i = 0;
-	int z_var = 96;
+	int z_var = beginn - 1;
 
 	printf("Start Schreiben; %d: \n", *(int*)pid);
 
@@ -23,8 +23,8 @@ void* producer(void *pid, pthread_cond_t *restart, int *prod_stopped){
 		// nächstes zu schreibendes Zeichen
 		z_var++;
 		//Zirkel garantieren: 'a' = 97, 'z' = 122
-		if (z_var > 122){
-			z_var = 97;
+		if (z_var > end){
+			z_var = beginn;
 		}
 		//mutex locken
 		pthread_mutex_lock(&rb_mutex);
