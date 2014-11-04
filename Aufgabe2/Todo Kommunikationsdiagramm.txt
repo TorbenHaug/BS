@@ -1,7 +1,0 @@
-2. Geben Sie vorab eine Art von Kommunikationsdiagramm an, dass die Threads, den
-FIFO und die Mutexe mit ihren Wechselwirkungen incl. der Terminierungssignale
-darstellt.
-
-Im Diagramm fehlen die Mutex Variablen und der FIFO Scheiß.
-Müssen wir noch mal dran.
-Das Diagramm so, wie es jetzt ist, dient der Sache nicht 100%ig.
