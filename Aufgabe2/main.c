@@ -93,7 +93,8 @@ int main(int argc, char* argv[])
 }
 
 
-// Hilfsfunktion zur Initialisierung der Attribut-Variablenvoid pthread_attr_creator(pthread_attr_t* attr, int prio){
+// Hilfsfunktion zur Initialisierung der Attribut-Variablenvoid
+pthread_attr_creator(pthread_attr_t* attr, int prio){
 	struct sched_param my_prio;
 	pthread_attr_init(attr); // 2.
 	pthread_attr_setinheritsched(attr, PTHREAD_EXPLICIT_SCHED); //Freigabe der Parameteraenderung
