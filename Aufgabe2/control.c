@@ -73,6 +73,6 @@ void usage() {
 	printf("# 2     | Toggle producer 2 on/off #\n");
 	printf("# c | C | Toggle consumer on/off   #\n");
 	printf("# q | Q | Terminate all threads    #\n");
-	printf("# h     | Prints this help page    #\n");
+	printf("# h     | Print this help page     #\n");
 	printf(" ----------------------------------\n");
 }
