@@ -34,6 +34,9 @@
 		EXTERN pthread_t threads[4];
 		EXTERN int thread_id[4];
 		EXTERN int verbose;
+		EXTERN int consumer_sleep;
+		EXTERN int producer1_sleep;
+		EXTERN int producer2_sleep;
 	#endif
 	void* p_1_w(void *pid);
 	void* p_2_w(void *pid);

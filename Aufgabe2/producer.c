@@ -1,17 +1,17 @@
 #include "producer.h"
 #include "rb.h"
 
-void* producer(void *pid, pthread_cond_t *restart, int *prod_stopped, char beginn, char end);
+void* producer(void *pid, pthread_cond_t *restart, int *prod_stopped, char beginn, char end, int *sleep_time);
 
 void* p_1_w(void *pid){
-	return producer(pid, &prod_1_restart, &prod_1_stopped, 'a', 'z');
+	return producer(pid, &prod_1_restart, &prod_1_stopped, 'a', 'z', &producer1_sleep);
 }
 
 void* p_2_w(void *pid){
-	return producer(pid,&prod_2_restart, &prod_2_stopped, 'A', 'Z');
+	return producer(pid,&prod_2_restart, &prod_2_stopped, 'A', 'Z', &producer2_sleep);
 }
 
-void* producer(void *pid, pthread_cond_t *restart, int *prod_stopped, char beginn, char end){
+void* producer(void *pid, pthread_cond_t *restart, int *prod_stopped, char beginn, char end, int *sleep_time){
 	int i = 0;
 	int z_var = beginn - 1;
 
@@ -72,7 +72,7 @@ void* producer(void *pid, pthread_cond_t *restart, int *prod_stopped, char begin
 		// Mutex freigeben
 		pthread_mutex_unlock(&rb_mutex);
 		// Thread 3 Secunden anhalten
-		sleep(3);
+		sleep(*sleep_time);
 	}
 	return NULL;
 }
