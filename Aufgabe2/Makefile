@@ -1,7 +1,7 @@
-VERSION = 3.02
+VERSION = 4.8
 CC	= /usr/bin/gcc
-CFLAGS	= -Wall -g -D_REENTRANT -DVERSION=\"$(VERSION)\"
-LDFRALGS= -lm -lpthread `gtk-config --cflags` `gtk-config --libs` -lgthread
+CFLAGS	= -Wall -g -lpthread -D_REENTRANT -DVERSION=\"$(VERSION)\"
+LDFRALGS= -lm -lpthread `gtk-config --cflags` `gtk-config --libs`
 
 OBJ = consumer.o control.o getch.o main.o producer.o
 

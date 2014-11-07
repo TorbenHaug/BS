@@ -112,8 +112,9 @@ int main(int argc, char* argv[])
 		printf( "Thread_routine %d: TId=%d, prio=%d, policy=%d\n", i, threads[i], my_sched_param.sched_priority, my_policy);
 	}
 
-	for(i = 0; i < 4; i++)
+	for(i = 0; i < 4; i++) {
 		pthread_join(threads[i], thread_result[i]);
+	}
 
 	printf("Ende nach Join der Threads\n");
 	return 0;

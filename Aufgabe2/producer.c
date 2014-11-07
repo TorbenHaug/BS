@@ -27,6 +27,7 @@ void* producer(void *pid, pthread_cond_t *restart, int *prod_stopped, char begin
 			z_var = beginn;
 		}
 		//mutex locken
+		pthread_testcancel();
 		pthread_mutex_lock(&rb_mutex);
 
 		//prüfen, ob der Speicher voll ist, oder ob der producer angehalten ist
@@ -49,6 +50,7 @@ void* producer(void *pid, pthread_cond_t *restart, int *prod_stopped, char begin
 
 			}
 		}
+
 		// in den puffer Schreiben
 		if (verbose)
 				printf("Producer %d: Added sign '%c' to Ringbuffer.\n", *(int*)pid, z_var);

@@ -46,9 +46,9 @@ void *control(void *pid) {
 			case 'q':
 			case 'Q':
 				// terminate threads
-				pthread_cancel(thread_id[1]); // prod 1
-				pthread_cancel(thread_id[2]); // prod 2
-				pthread_cancel(thread_id[3]); // consumer
+				pthread_cancel(threads[1]); // prod 1
+				pthread_cancel(threads[2]); // prod 2
+				pthread_cancel(threads[3]); // consumer
 				run = 0;
 				break;
 			case 'h':

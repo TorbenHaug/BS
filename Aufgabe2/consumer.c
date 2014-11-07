@@ -7,6 +7,7 @@ void* consumer(void *pid)
 	while(1)
 	{
 		i++;
+		pthread_testcancel();
 		pthread_mutex_lock(&rb_mutex);
 		// Überprüfen, ob alle Runbedingungen zutreffen.
 		while(p_rb -> count == 0 || cons_stopped)
