@@ -7,6 +7,7 @@
 #ifndef MMANAGE_H
 #define MMANAGE_H
 #include "vmem.h"
+#include "vmaccess.h"
 #include <limits.h>
 
 /* Event struct for logging */
@@ -21,35 +22,35 @@ struct logevent {
 /* Prototypes */
 void sighandler(int signo);
 
-void vmem_init(void);
+	void vmem_init(void);
 
-void allocate_page(void);
+	void allocate_page(void);
 
-void fetch_page(int pt_idx);
+	void fetch_page(int pt_idx);
 
-void store_page(int pt_idx);
+	void store_page(int pt_idx);
 
-void update_pt(int frame);
+	void update_pt(int frame);
 
-int find_remove_frame(void);
+	int find_remove_frame(void);
 
-int find_remove_fifo(void);
+	int find_remove_fifo(void);
 
-int find_remove_lru(void);
+	int find_remove_lru(void);
 
-int find_remove_clock(void);
+	int find_remove_clock(void);
 
-int search_bitmap(void);
+	int search_bitmap(void);
 
-int find_free_bit(Bmword bmword, Bmword mask);
+	int find_free_bit(Bmword bmword, Bmword mask);
 
-void init_pagefile(const char *pfname);
+	void init_pagefile(const char *pfname);
 
-void cleanup(void);
+	void cleanup(void);
 
-void logger(struct logevent le);
+	void logger(struct logevent le);
 
-void dump_pt(void);
+	void dump_pt(void);
 
 /* Misc */
 #define MMANAGE_PFNAME "./pagefile.bin" /* pagefile name */

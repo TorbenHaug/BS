@@ -18,6 +18,7 @@
  * */
 
 #include "mmanage.h"
+#include <stdio.h>
 
 struct vmem_struct *vmem = NULL;
 FILE *pagefile = NULL;
@@ -126,4 +127,47 @@ logger(struct logevent le)
             le.pf_count, le.g_count,
             le.replaced_page, le.req_pageno, le.alloc_frame);
     fflush(logfile);
+}
+
+void
+vmem_init(void)
+{
+	key_t shm_key = 0;
+	int shm_id = -1;
+
+	shm_id =shmget(shm_key, SHMSIZE, 0664 |IPC_CREAT);
+
+	//TODO: ?
+
+	vmem = shmat(shm_key, NULL, 0);
+
+	//TODO: ?
+
+	vmem->adm.size = VMEM_NPAGES * VMEM_PAGESIZE;
+	vmem->adm.mmanage_pid = getpid();
+	vmem->adm.shm_id = shm_id;
+
+	sem_init(&(vmem->adm.sema), 1, 0);
+	//TODO: ?
+	return;
+}
+
+void
+init_pagefile(const char *pfname)
+{
+
+}
+
+void sighandler(int signo){
+	signal_number = signo;
+	if(signo == SIGUSR1){
+		printf("SIGUSR1");
+	}
+	else if(signo == SIGUSR2){
+		printf("SIGUSR2");
+	}
+	else if(signo == SIGINT){
+		printf("SIGINT");
+		exit(EXIT_SUCCESS);
+	}
 }

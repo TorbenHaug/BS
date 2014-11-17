@@ -18,10 +18,10 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 
-#define SHMKEY          "/vmem.h"
+#define SHMKEY          "/vmem.h" //TODO: muss auf eine Reale Datei zeigen
 #define SHMPROCID       'C'
 
-typedef unsigned  int Bmword;    /* Frame bitmap */
+typedef unsigned int Bmword;    /* Frame bitmap */
 
 /* Sizes */
 #define VMEM_VIRTMEMSIZE 1024   /* Process address space / items */
