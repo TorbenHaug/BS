@@ -1,6 +1,7 @@
 CC=/usr/bin/gcc
 CCFLAGS := -Wall -std=c99 -pthread -D_XOPEN_SOURCE=600
 LDFLAGS := -lpthread
+CCFLAGS += -DVMEM_ALGO=2
 
 all: vmappl mmanage
 
@@ -22,4 +23,4 @@ mmanage: mmanage.o
 		$(CC) $(CCFLAGS) -o mmanage mmanage.o
 		
 clean: 
-	rm *.o mmanage vmappl
+	rm *.o mmanage vmappl logfile.txt pagefile.bin

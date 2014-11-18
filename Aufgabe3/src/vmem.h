@@ -18,7 +18,7 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 
-#define SHMKEY          "/vmem.h" //TODO: muss auf eine Reale Datei zeigen
+#define SHMKEY          "./vmem.h" //TODO: muss auf eine Reale Datei zeigen
 #define SHMPROCID       'C'
 
 typedef unsigned int Bmword;    /* Frame bitmap */
@@ -28,7 +28,7 @@ typedef unsigned int Bmword;    /* Frame bitmap */
 #define VMEM_PHYSMEMSIZE  128   /* Physical memory / items */
 #define VMEM_PAGESIZE       8   /* Items per page */
 #define VMEM_NPAGES     (VMEM_VIRTMEMSIZE / VMEM_PAGESIZE)     /* Total number of pages */
-#define VMEM_NFRAMES (VMEM_PHYSMEMSIZE / VMEM_PAGESIZE)   /* Number of available frames */
+#define VMEM_NFRAMES 	(VMEM_PHYSMEMSIZE / VMEM_PAGESIZE)   /* Number of available frames */
 #define VMEM_LASTBMMASK (~0U << (VMEM_NFRAMES % (sizeof(Bmword) * 8)))
 #define VMEM_BITS_PER_BMWORD     (sizeof(Bmword) * 8)
 #define VMEM_BMSIZE     ((VMEM_NFRAMES - 1) / VMEM_BITS_PER_BMWORD + 1)

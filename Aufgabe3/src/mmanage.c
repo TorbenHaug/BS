@@ -28,10 +28,13 @@ int signal_number = 0;          /* Received signal */
 int
 main(void)
 {
+	//setbuf(stdout, NULL);
+	printf("INIT\n");
     struct sigaction sigact;
 
     /* Init pagefile */
     init_pagefile(MMANAGE_PFNAME);
+    printf("POST PAGEFILE CREATE\n");
     if(!pagefile) {
         perror("Error creating pagefile");
         exit(EXIT_FAILURE);
@@ -39,6 +42,7 @@ main(void)
 
     /* Open logfile */
     logfile = fopen(MMANAGE_LOGFNAME, "w");
+    printf("POST LOGFILE\n");
     if(!logfile) {
         perror("Error creating logfile");
         exit(EXIT_FAILURE);
@@ -46,6 +50,7 @@ main(void)
 
     /* Create shared memory and init vmem structure */
     vmem_init();
+    printf("POST INIT VMEM \n");
     if(!vmem) {
         perror("Error initialising vmem");
         exit(EXIT_FAILURE);
@@ -134,12 +139,14 @@ vmem_init(void)
 {
 	key_t shm_key = 0;
 	int shm_id = -1;
+	printf("PRE GET\n");
 
 	shm_id =shmget(shm_key, SHMSIZE, 0664 |IPC_CREAT);
 
 	//TODO: ?
+	printf("PRE ALLOCATE\n");
 
-	vmem = shmat(shm_key, NULL, 0);
+	vmem = shmat(shm_id, NULL, 0);
 
 	//TODO: ?
 
@@ -147,7 +154,11 @@ vmem_init(void)
 	vmem->adm.mmanage_pid = getpid();
 	vmem->adm.shm_id = shm_id;
 
+	printf("PRE SEMAPHORE\n");
+
 	sem_init(&(vmem->adm.sema), 1, 0);
+
+	printf("POST SEMAPHORE\n");
 	//TODO: ?
 	return;
 }
@@ -155,19 +166,196 @@ vmem_init(void)
 void
 init_pagefile(const char *pfname)
 {
+	int itemNumbers = VMEM_NPAGES * VMEM_PAGESIZE;
+	int data[itemNumbers];
 
+	srand(SEED);
+
+	int i;
+
+	for(i = 0; i < itemNumbers; i++) {
+		data[i] = rand() % 1000;
+	}
+
+	pagefile = fopen(pfname, "w+b");
+	if(!pagefile) {
+		// TODO Error
+		perror("Error creating pagefile");
+		exit(EXIT_FAILURE);
+	}
+
+	int write_result = fwrite(data, sizeof(int), itemNumbers, pagefile);
+	if(!write_result) {
+		// TODO Error
+		perror("Error creating pagefile");
+		exit(EXIT_FAILURE);
+	}
+
+#ifdef DEBUG_MESSAGES
+	fprintf(stderr, "Pagefile Success");
+#endif
 }
 
 void sighandler(int signo){
 	signal_number = signo;
 	if(signo == SIGUSR1){
-		printf("SIGUSR1");
+		allocate_page();
 	}
 	else if(signo == SIGUSR2){
-		printf("SIGUSR2");
+		//dump_pt();
 	}
 	else if(signo == SIGINT){
-		printf("SIGINT");
+		//cleanup();
 		exit(EXIT_SUCCESS);
 	}
+}
+
+void allocate_page(void){
+	int req_pageno = vmem->adm.req_pageno;
+	int frame = VOID_IDX;
+	int page_removed_idx = VOID_IDX;
+	/* Page not allocated? */
+	if(vmem->pt.entries[req_pageno].flags & PTF_PRESENT){
+		//Todo: ?
+	}
+	/* Free frames? */
+	frame = search_bitmap();
+	if(frame != VOID_IDX) {
+		fprintf(stderr, "Found free frame no %d, allocating page\n", frame);
+		update_pt(frame);
+		fetch_page(vmem->adm.req_pageno);
+	}
+	/* end if FRAME_VOID */ /* No free frames: Which page to remove? */
+	else{
+		frame = find_remove_frame();
+		//Todo: ?
+		page_removed_idx = vmem->pt.framepage[frame];
+		//Todo: ?
+	}
+
+	//Todo: ?
+	/* Store page to be removed and clear present-bit */
+	if(vmem->pt.entries[page_removed_idx].flags & PTF_DIRTY) {
+		store_page(page_removed_idx);
+	}
+
+	vmem->pt.entries[page_removed_idx].flags &= ~PTF_PRESENT;
+	/* Load new page */
+	update_pt(frame);
+	fetch_page(vmem->adm.req_pageno);
+
+	/* Update page fault counter */
+	vmem->adm.pf_count++;
+	/* Log action */
+	//Todo: ?
+	/* Unblock application */
+	sem_post(&(vmem->adm.sema));
+	//Todo: ?
+}
+
+void fetch_page(int pt_idx){
+	int offset = pt_idx * sizeof(int) * VMEM_PAGESIZE;
+	int frame = vmem->pt.entries[pt_idx].frame;
+	int *pstart = &(vmem->data[frame * VMEM_PAGESIZE]);
+	/* fseek: change the file position indicator for the specified stream*/
+	if(fseek(pagefile, offset, SEEK_SET) == -1) {
+		perror("Positioning in pagefile failed! ");
+		exit(EXIT_FAILURE);
+	}
+	fread(pstart, sizeof(int), VMEM_PAGESIZE, pagefile);
+}
+
+void store_page(int pt_idx){
+	int offset = pt_idx * sizeof(int) * VMEM_PAGESIZE;
+	int frame = vmem->pt.entries[pt_idx].frame;
+	int *pstart = &vmem->data[frame * VMEM_PAGESIZE];
+	fseek(pagefile, offset, SEEK_SET);
+	//Todo: ?
+	fwrite(pstart, sizeof(int), VMEM_PAGESIZE, pagefile);
+	//Todo: ?
+}
+
+void update_pt(int frame){
+	int page_idx = vmem->adm.req_pageno;
+	int bm_idx = frame / VMEM_BITS_PER_BMWORD;
+	int bit = frame % VMEM_BITS_PER_BMWORD;
+	/* Update bitmap */
+	vmem->adm.bitmap[bm_idx] |= (1U << bit);
+	/* Increment of next_alloc_idx */
+	vmem->adm.next_alloc_idx = (vmem->adm.next_alloc_idx + 1) % VMEM_NFRAMES;
+	/* Update framepage */
+	vmem->pt.framepage[frame] = page_idx;
+	/* Update pt_entry */
+	vmem->pt.entries[page_idx].flags |= PTF_USED | PTF_PRESENT;
+	vmem->pt.entries[page_idx].flags &= ~PTF_DIRTY;
+	vmem->pt.entries[page_idx].frame = frame;
+	//Todo: no idea
+	//vmem->pt.entries[page_idx].startcount = vmem->adm.g_count;
+	vmem->pt.entries[page_idx].count = 0;
+}
+
+int find_remove_frame(void){
+	int remove_frame = VOID_IDX;
+	switch (VMEM_ALGO) {
+		case VMEM_ALGO_LRU:
+			remove_frame = find_remove_lru();
+			break;
+		case VMEM_ALGO_CLOCK:
+			remove_frame = find_remove_clock();
+			break;
+		case VMEM_ALGO_FIFO:
+		default:
+			remove_frame = find_remove_fifo();
+			break;
+	}
+	return remove_frame;
+}
+
+int find_remove_clock(void){
+	int remove_frame = vmem->adm.next_alloc_idx;
+	int frame = remove_frame;
+	int page;
+	while(1) {
+		page = vmem->pt.framepage[frame];
+		if(vmem->pt.entries[page].flags & PTF_USED) {
+			vmem->pt.entries[page].flags &= ~PTF_USED;
+			/* clear used flag*/
+			frame = (frame + 1) % VMEM_NFRAMES;
+		}
+		else { /* frame not marked as used */
+			remove_frame = frame;
+			break;
+		}
+	}
+	/* end while */
+	vmem->adm.next_alloc_idx = remove_frame ;
+	return remove_frame;
+}
+
+int search_bitmap(void){
+	int i;
+	int free_bit = VOID_IDX;
+	for(i = 0; i < VMEM_BMSIZE; i++) {
+		Bmword bitmap = vmem->adm.bitmap[i];
+		Bmword mask = (i == (VMEM_BMSIZE - 1) ? VMEM_LASTBMMASK : 0);
+		free_bit = find_free_bit(bitmap, mask);
+		if(free_bit != VOID_IDX) {
+			break;
+		}
+	}
+	/* end for i */ return free_bit;
+}
+
+int find_free_bit(Bmword bmword, Bmword mask){
+	int bit = VOID_IDX;
+	Bmword bitmask = 1; /* Mask bmword */
+	bmword |= mask;
+	for(bit = 0; bit < VMEM_BITS_PER_BMWORD; bit++) {
+		if(!(bmword & bitmask)) {
+			break;
+		}
+		/* end if */
+		bitmask <<= 1;
+	} /* end for */
+	return bit < VMEM_BITS_PER_BMWORD ? bit : VOID_IDX;
 }
