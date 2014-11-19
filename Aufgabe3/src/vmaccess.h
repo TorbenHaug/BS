@@ -16,4 +16,6 @@ int vmem_read(int address);
 /* Write data to "virtual" address */
 void vmem_write(int address, int data);
 
+int phys_index(int address, int write);
+
 #endif

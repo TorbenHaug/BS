@@ -137,29 +137,30 @@ logger(struct logevent le)
 void
 vmem_init(void)
 {
-	key_t shm_key = 0;
+	key_t shm_key = 23456;
 	int shm_id = -1;
-	printf("PRE GET\n");
 
 	shm_id =shmget(shm_key, SHMSIZE, 0664 |IPC_CREAT);
-
-	//TODO: ?
-	printf("PRE ALLOCATE\n");
+	if(shm_id == -1){
+		perror("Error initialising shmget");
+		exit(EXIT_FAILURE);
+	}
 
 	vmem = shmat(shm_id, NULL, 0);
-
-	//TODO: ?
+	if(vmem == (char *)-1){
+		perror("Error initialising shmat");
+		exit(EXIT_FAILURE);
+	}
 
 	vmem->adm.size = VMEM_NPAGES * VMEM_PAGESIZE;
 	vmem->adm.mmanage_pid = getpid();
 	vmem->adm.shm_id = shm_id;
 
-	printf("PRE SEMAPHORE\n");
+	if (sem_init(&(vmem->adm.sema), 1, 0) == - 1){
+		perror("Error initialising sem_init");
+		exit(EXIT_FAILURE);
+	}
 
-	sem_init(&(vmem->adm.sema), 1, 0);
-
-	printf("POST SEMAPHORE\n");
-	//TODO: ?
 	return;
 }
 
@@ -206,6 +207,7 @@ void sighandler(int signo){
 	}
 	else if(signo == SIGINT){
 		//cleanup();
+		//Todo: destroy shared memory
 		exit(EXIT_SUCCESS);
 	}
 }
@@ -222,8 +224,8 @@ void allocate_page(void){
 	frame = search_bitmap();
 	if(frame != VOID_IDX) {
 		fprintf(stderr, "Found free frame no %d, allocating page\n", frame);
-		update_pt(frame);
-		fetch_page(vmem->adm.req_pageno);
+		//update_pt(frame); //unnessary?
+		//fetch_page(vmem->adm.req_pageno); //unnessary?
 	}
 	/* end if FRAME_VOID */ /* No free frames: Which page to remove? */
 	else{
@@ -231,15 +233,16 @@ void allocate_page(void){
 		//Todo: ?
 		page_removed_idx = vmem->pt.framepage[frame];
 		//Todo: ?
-	}
 
-	//Todo: ?
-	/* Store page to be removed and clear present-bit */
-	if(vmem->pt.entries[page_removed_idx].flags & PTF_DIRTY) {
-		store_page(page_removed_idx);
-	}
 
-	vmem->pt.entries[page_removed_idx].flags &= ~PTF_PRESENT;
+		//Todo: ?
+		/* Store page to be removed and clear present-bit */
+		if(vmem->pt.entries[page_removed_idx].flags & PTF_DIRTY) {
+			store_page(page_removed_idx);
+		}
+
+		vmem->pt.entries[page_removed_idx].flags &= ~PTF_PRESENT;
+	}
 	/* Load new page */
 	update_pt(frame);
 	fetch_page(vmem->adm.req_pageno);
@@ -343,7 +346,8 @@ int search_bitmap(void){
 			break;
 		}
 	}
-	/* end for i */ return free_bit;
+	/* end for i */
+	return free_bit;
 }
 
 int find_free_bit(Bmword bmword, Bmword mask){
