@@ -79,6 +79,12 @@ int phys_index(int address, int write){
 		//Dirty bit setzen
 		vmem->pt.entries[page].flags |= PTF_DIRTY;
 	}
+
+	// setze den global count hoch (Zugriff auf den Speichr ist erfolgt) LRU
+	vmem->adm.g_count++;
+	// setze den count des aktuellen Frames auf den Globalcount LRU
+	vmem->pt.entries[page].count = vmem->adm.g_count;
+
 	// neuen index (im PhysMem) errechen
 	return (vmem->pt.entries[page].frame * VMEM_PAGESIZE) + offset;
 }

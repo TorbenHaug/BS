@@ -297,9 +297,7 @@ void update_pt(int frame){
 	vmem->pt.entries[page_idx].flags |= PTF_USED | PTF_PRESENT;
 	vmem->pt.entries[page_idx].flags &= ~PTF_DIRTY;
 	vmem->pt.entries[page_idx].frame = frame;
-	//Todo: no idea
-	//vmem->pt.entries[page_idx].startcount = vmem->adm.g_count;
-	vmem->pt.entries[page_idx].count = 0;
+	vmem->pt.entries[page_idx].count = vmem->adm.g_count;
 }
 
 int find_remove_frame(void){
@@ -339,7 +337,27 @@ int find_remove_clock(void){
 	vmem->adm.next_alloc_idx = remove_frame ;
 	return remove_frame;
 }
+int find_remove_fifo(void){
+	// holen des nächsten zu beschreibenden Hauptspeicher Frames
+	int remove_frame = vmem->adm.next_alloc_idx;
+	return remove_frame;
 
+}
+int find_remove_lru(void){
+	int i;
+	int remove_frame = VOID_IDX;
+	// smallest_count auf infinity setzen
+	unsigned int smallest_count = -1;
+	for(i = 0; i < VMEM_NFRAMES; i++){
+		int page = vmem->pt.framepage[i];
+		if(vmem->pt.entries[page].count < smallest_count){
+			smallest_count = vmem->pt.entries[page].count;
+			remove_frame = i;
+		}
+	}
+	return remove_frame;
+}
+//????????????????????????
 int search_bitmap(void){
 	int i;
 	int free_bit = VOID_IDX;
