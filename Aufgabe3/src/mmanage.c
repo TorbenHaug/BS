@@ -199,7 +199,7 @@ void sighandler(int signo){
 		allocate_page();
 	}
 	else if(signo == SIGUSR2){
-		//Todo: dump_pt();
+		dump_pt();
 	}
 	else if(signo == SIGINT){
 		cleanup();
@@ -259,6 +259,24 @@ void allocate_page(void){
 	logger(le);
 	/* Unblock application */
 	sem_post(&(vmem->adm.sema));
+}
+
+// Prints a dump of the page table
+void dump_pt(void) {
+	fprintf(stderr, "Dump pagetable\n\n");
+
+	fprintf(stderr, "admin struct\n");
+	fprintf(stderr, "------------\n");
+	fprintf(stderr, "size: %d, pf_count: %d\n", vmem->adm.size, vmem->adm.pf_count);
+	fprintf(stderr, "req_pageno: %d, next_alloc_idx: %d\n", vmem->adm.req_pageno, vmem->adm.next_alloc_idx);
+	fprintf(stderr, "g_count: %d\n\n", vmem->adm.g_count);
+
+	fprintf(stderr, "data\n");
+	fprintf(stderr, "----\n");
+	int i;
+	for(i = 0; i < (VMEM_NFRAMES * VMEM_PAGESIZE); i++) {
+		fprintf(stderr, "idx %d: %d\n", i, vmem->data[i]);
+	}
 }
 
 void fetch_page(int pt_idx){
