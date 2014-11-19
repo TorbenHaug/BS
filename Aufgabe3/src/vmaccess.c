@@ -74,7 +74,9 @@ int phys_index(int address, int write){
 	}
 	// used bit setzen
 	vmem->pt.entries[page].flags |= PTF_USED;
+	//Prüfn ob eine schreiboperation stattfindet
 	if(write){
+		//Dirty bit setzen
 		vmem->pt.entries[page].flags |= PTF_DIRTY;
 	}
 	// neuen index (im PhysMem) errechen

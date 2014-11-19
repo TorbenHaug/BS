@@ -29,12 +29,10 @@ int
 main(void)
 {
 	//setbuf(stdout, NULL);
-	printf("INIT\n");
     struct sigaction sigact;
 
     /* Init pagefile */
     init_pagefile(MMANAGE_PFNAME);
-    printf("POST PAGEFILE CREATE\n");
     if(!pagefile) {
         perror("Error creating pagefile");
         exit(EXIT_FAILURE);
@@ -42,7 +40,6 @@ main(void)
 
     /* Open logfile */
     logfile = fopen(MMANAGE_LOGFNAME, "w");
-    printf("POST LOGFILE\n");
     if(!logfile) {
         perror("Error creating logfile");
         exit(EXIT_FAILURE);
@@ -50,7 +47,6 @@ main(void)
 
     /* Create shared memory and init vmem structure */
     vmem_init();
-    printf("POST INIT VMEM \n");
     if(!vmem) {
         perror("Error initialising vmem");
         exit(EXIT_FAILURE);
@@ -140,7 +136,7 @@ vmem_init(void)
 	key_t shm_key = 23456;
 	int shm_id = -1;
 
-	shm_id =shmget(shm_key, SHMSIZE, 0664 |IPC_CREAT);
+	shm_id = shmget(shm_key, SHMSIZE, 0664 |IPC_CREAT);
 	if(shm_id == -1){
 		perror("Error initialising shmget");
 		exit(EXIT_FAILURE);
@@ -203,39 +199,43 @@ void sighandler(int signo){
 		allocate_page();
 	}
 	else if(signo == SIGUSR2){
-		//dump_pt();
+		//Todo: dump_pt();
 	}
 	else if(signo == SIGINT){
-		//cleanup();
-		//Todo: destroy shared memory
+		cleanup();
+
 		exit(EXIT_SUCCESS);
 	}
 }
-
+void cleanup(){
+	//close opened files
+	fclose(pagefile);
+	fclose(logfile);
+	// zerstöre den Shared Memory
+	int shm_id = vmem->adm.shm_id;
+	shmctl(shm_id, IPC_RMID, 0);
+#ifdef DEBUG_MESSAGES
+        fprintf(stderr, "Programm erfolgreich beendet\n");
+#endif /* DEBUG_MESSAGES */
+}
 void allocate_page(void){
 	int req_pageno = vmem->adm.req_pageno;
 	int frame = VOID_IDX;
 	int page_removed_idx = VOID_IDX;
 	/* Page not allocated? */
 	if(vmem->pt.entries[req_pageno].flags & PTF_PRESENT){
+		return; //nichts zu tun, keiner wes warum diese funktion gerufen wurde?
 		//Todo: ?
 	}
 	/* Free frames? */
 	frame = search_bitmap();
 	if(frame != VOID_IDX) {
 		fprintf(stderr, "Found free frame no %d, allocating page\n", frame);
-		//update_pt(frame); //unnessary?
-		//fetch_page(vmem->adm.req_pageno); //unnessary?
 	}
 	/* end if FRAME_VOID */ /* No free frames: Which page to remove? */
 	else{
 		frame = find_remove_frame();
-		//Todo: ?
 		page_removed_idx = vmem->pt.framepage[frame];
-		//Todo: ?
-
-
-		//Todo: ?
 		/* Store page to be removed and clear present-bit */
 		if(vmem->pt.entries[page_removed_idx].flags & PTF_DIRTY) {
 			store_page(page_removed_idx);
@@ -250,10 +250,15 @@ void allocate_page(void){
 	/* Update page fault counter */
 	vmem->adm.pf_count++;
 	/* Log action */
-	//Todo: ?
+	struct logevent le;
+	le.req_pageno = vmem->adm.req_pageno;
+	le.replaced_page = page_removed_idx;
+	le.alloc_frame = frame;
+	le.g_count = vmem->adm.g_count;
+	le.pf_count = vmem->adm.pf_count;
+	logger(le);
 	/* Unblock application */
 	sem_post(&(vmem->adm.sema));
-	//Todo: ?
 }
 
 void fetch_page(int pt_idx){
