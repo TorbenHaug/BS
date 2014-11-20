@@ -37,6 +37,11 @@ main(void)
         perror("Error creating pagefile");
         exit(EXIT_FAILURE);
     }
+#ifdef DEBUG_MESSAGES
+    else {
+        fprintf(stderr, "Pagefile successfully created\n");
+    }
+#endif /* DEBUG_MESSAGES */
 
     /* Open logfile */
     logfile = fopen(MMANAGE_LOGFNAME, "w");
@@ -44,6 +49,11 @@ main(void)
         perror("Error creating logfile");
         exit(EXIT_FAILURE);
     }
+#ifdef DEBUG_MESSAGES
+    else {
+        fprintf(stderr, "Logfile successfully created\n");
+    }
+#endif /* DEBUG_MESSAGES */
 
     /* Create shared memory and init vmem structure */
     vmem_init();
@@ -141,12 +151,22 @@ vmem_init(void)
 		perror("Error initialising shmget");
 		exit(EXIT_FAILURE);
 	}
+#ifdef DEBUG_MESSAGES
+    else {
+        fprintf(stderr, "Sharedmemory successfully allocated\n");
+    }
+#endif /* DEBUG_MESSAGES */
 
 	vmem = shmat(shm_id, NULL, 0);
 	if(vmem == (char *)-1){
 		perror("Error initialising shmat");
 		exit(EXIT_FAILURE);
 	}
+#ifdef DEBUG_MESSAGES
+    else {
+        fprintf(stderr, "Sharedmemory successfully attached to local memory\n");
+    }
+#endif /* DEBUG_MESSAGES */
 
 	vmem->adm.size = VMEM_NPAGES * VMEM_PAGESIZE;
 	vmem->adm.mmanage_pid = getpid();
@@ -156,7 +176,11 @@ vmem_init(void)
 		perror("Error initialising sem_init");
 		exit(EXIT_FAILURE);
 	}
-
+#ifdef DEBUG_MESSAGES
+    else {
+        fprintf(stderr, "Semaphore successfully installed\n");
+    }
+#endif /* DEBUG_MESSAGES */
 	return;
 }
 
@@ -176,14 +200,12 @@ init_pagefile(const char *pfname)
 
 	pagefile = fopen(pfname, "w+b");
 	if(!pagefile) {
-		// TODO Error
 		perror("Error creating pagefile");
 		exit(EXIT_FAILURE);
 	}
 
 	int write_result = fwrite(data, sizeof(int), itemNumbers, pagefile);
 	if(!write_result) {
-		// TODO Error
 		perror("Error creating pagefile");
 		exit(EXIT_FAILURE);
 	}
@@ -209,12 +231,35 @@ void sighandler(int signo){
 }
 void cleanup(){
 	//close opened files
-	fclose(pagefile);
-	fclose(logfile);
+	if (fclose(pagefile)){
+		perror("Error closing pagefile");
+		exit(EXIT_FAILURE);
+	}
+#ifdef DEBUG_MESSAGES
+    else {
+        fprintf(stderr, "Pagefile closed\n");
+    }
+#endif /* DEBUG_MESSAGES */
+	if (fclose(logfile)){
+		perror("Error closing logfile");
+		exit(EXIT_FAILURE);
+	}
+#ifdef DEBUG_MESSAGES
+    else {
+        fprintf(stderr, "Logfile closed\n");
+    }
+#endif /* DEBUG_MESSAGES */
 	// zerstöre den Shared Memory
 	int shm_id = vmem->adm.shm_id;
-	shmctl(shm_id, IPC_RMID, 0);
+	while(!vmem){
+		shmctl(shm_id, IPC_RMID, 0);
+		if(!vmem){
+			fprintf(stderr, "Shared memory can't be destroyed, please close all other processes using it\n");
+			sleep(1);
+		}
+	}
 #ifdef DEBUG_MESSAGES
+		fprintf(stderr, "Shared memory successfully destroyed");
         fprintf(stderr, "Programm erfolgreich beendet\n");
 #endif /* DEBUG_MESSAGES */
 }
@@ -249,6 +294,9 @@ void allocate_page(void){
 
 	/* Update page fault counter */
 	vmem->adm.pf_count++;
+#ifdef DEBUG_MESSAGES
+        fprintf(stderr, "Allocated Page %d to %d", req_pageno, frame);
+#endif /* DEBUG_MESSAGES */
 	/* Log action */
 	struct logevent le;
 	le.req_pageno = vmem->adm.req_pageno;
@@ -295,10 +343,15 @@ void store_page(int pt_idx){
 	int offset = pt_idx * sizeof(int) * VMEM_PAGESIZE;
 	int frame = vmem->pt.entries[pt_idx].frame;
 	int *pstart = &vmem->data[frame * VMEM_PAGESIZE];
-	fseek(pagefile, offset, SEEK_SET);
-	//Todo: ?
-	fwrite(pstart, sizeof(int), VMEM_PAGESIZE, pagefile);
-	//Todo: ?
+	if(fseek(pagefile, offset, SEEK_SET) == -1){
+		perror("Positioning in pagefile failed! ");
+		exit(EXIT_FAILURE);
+	}
+
+	if(!fwrite(pstart, sizeof(int), VMEM_PAGESIZE, pagefile)){
+		perror("Writing in pagefile failed! ");
+	exit(EXIT_FAILURE);
+	}
 }
 
 void update_pt(int frame){
