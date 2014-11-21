@@ -25,12 +25,25 @@ typedef unsigned int Bmword;    /* Frame bitmap */
 
 /* Sizes */
 #define VMEM_VIRTMEMSIZE 1024   /* Process address space / items */
-#define VMEM_PHYSMEMSIZE  128   /* Physical memory / items */
+#define VMEM_PHYSMEMSIZE  256   /* Physical memory / items */
 #define VMEM_PAGESIZE       8   /* Items per page */
 #define VMEM_NPAGES     (VMEM_VIRTMEMSIZE / VMEM_PAGESIZE)     /* Total number of pages */
 #define VMEM_NFRAMES 	(VMEM_PHYSMEMSIZE / VMEM_PAGESIZE)   /* Number of available frames */
-#define VMEM_LASTBMMASK (~0U << (VMEM_NFRAMES % (sizeof(Bmword) * 8)))
 #define VMEM_BITS_PER_BMWORD     (sizeof(Bmword) * 8)
+
+// Um anzuzeigen, welche Frames frei (Bit = 0) oder belegt (Bit = 1) sind, wird in einer Bitmap eine Bitmaske
+// verwendet. Die Bitmaske wird mit einem unsigned int (~0U) initialisiert.
+// Um "freie Plätze einzurichten", wird um die nötige Anzahl Frames innerhalb der Bitmaske links-geshiftet,
+// um Nullen hinzuschieben. Die nötige Anzahl an Shiftvorgängen wird berechnet durch
+// VMEM_FRAMES % VMEM_BITS_PER_BMWORD    ("Gesamtanzahl Frames" modulo "Bits pro BMWort == unsigned int == 32")
+// Problem: Legt man fest, dass 32 Frames verfügbar sein sollen (was der Anzahl Bits entspricht),
+// ergibt die Modulo-Rechnung == 0.
+// Damit würde in der Bitmaske überhaupt nicht geshiftet werden, und diese weiterhin aus Einsen bestehen,
+// was der Bedeutung: "alle Frames belegt" entspricht.
+// Daher wird die Initialisierung durch einen Konditional-Ausdruck realisiert, der gewährleistet, dass entweder
+// um die Anzahl stellen aus der Modulo-Rechnung geshiftet wird, oder um volle 32 Stellen, falls die Rechnung 0 ergibt.
+#define VMEM_LASTBMMASK (~0U << (VMEM_NFRAMES % VMEM_BITS_PER_BMWORD == 0 ? VMEM_BITS_PER_BMWORD : (VMEM_NFRAMES % VMEM_BITS_PER_BMWORD)))
+
 #define VMEM_BMSIZE     ((VMEM_NFRAMES - 1) / VMEM_BITS_PER_BMWORD + 1)
 
 /* Page Table */

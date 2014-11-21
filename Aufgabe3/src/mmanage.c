@@ -19,7 +19,7 @@
 
 #include "mmanage.h"
 #include <stdio.h>
-
+#define stderr stdout
 struct vmem_struct *vmem = NULL;
 FILE *pagefile = NULL;
 FILE *logfile = NULL;
@@ -264,15 +264,8 @@ void cleanup(){
 #endif//DEBUG_MESSAGES 
 	// Shared Memory zerstören
 	int shm_id = vmem->adm.shm_id;
-	while(!vmem){
-		shmctl(shm_id, IPC_RMID, 0);
-		if(!vmem){
-			fprintf(stderr, "Shared memory can't be destroyed, please close all other processes using it\n");
-			sleep(1);
-		}
-	}
+	shmctl(shm_id, IPC_RMID, 0);
 #ifdef DEBUG_MESSAGES
-		fprintf(stderr, "Shared memory successfully destroyed");
         fprintf(stderr, "Programm erfolgreich beendet\n");
 #endif//DEBUG_MESSAGES 
 }
@@ -290,6 +283,9 @@ void allocate_page(void){
   // ...sonst
 	// Bitmap nach freiem Frame durchsuchen
 	frame = search_bitmap();
+#ifdef DEBUG_MESSAGES
+        fprintf(stderr, "BitmapPage: %d BitMapSize: %d\n", frame, VMEM_BMSIZE);
+#endif//DEBUG_MESSAGES
   if(frame != VOID_IDX){
 		fprintf(stderr, "Found free frame no %d, allocating page\n", frame);
 	}
@@ -316,7 +312,7 @@ void allocate_page(void){
 	vmem->adm.pf_count++;
   
 #ifdef DEBUG_MESSAGES
-        fprintf(stderr, "Allocated Page %d to %d", req_pageno, frame);
+        fprintf(stderr, "Allocated Page %d to %d\n", req_pageno, frame);
 #endif//DEBUG_MESSAGES
 
 	// Ereignis loggen
@@ -385,6 +381,9 @@ void update_pt(int frame){
 	int bm_idx = frame / VMEM_BITS_PER_BMWORD;
 	int bit = frame % VMEM_BITS_PER_BMWORD;
 	// Update bitmap 
+#ifdef DEBUG_MESSAGES
+	fprintf(stderr, "Insert into bitmap %d at bit %d and frame %d\n", bm_idx, bit, frame);
+#endif
 	vmem->adm.bitmap[bm_idx] |= (1U << bit);
 	// Inkrementiere next_alloc_idx (für Seitenersetzungsalgorithmen relevant)
 	vmem->adm.next_alloc_idx = (vmem->adm.next_alloc_idx + 1) % VMEM_NFRAMES;
@@ -477,9 +476,16 @@ int search_bitmap(void){
 	int free_bit = VOID_IDX;
 	for(i = 0; i < VMEM_BMSIZE; i++) {
 		Bmword bitmap = vmem->adm.bitmap[i];
+
+		// Maske komplett mit Nullen belegen, falls die gewählte Bitmap nicht die Letzte ist
+		// Ansonsten mit vorgegebener Bitmaske initialisieren
 		Bmword mask = (i == (VMEM_BMSIZE - 1) ? VMEM_LASTBMMASK : 0);
 		free_bit = find_free_bit(bitmap, mask);
+
+		// Falls free_bit gültig ist
 		if(free_bit != VOID_IDX) {
+			// (i * VMEM_BITS_PER_BMWORD => Offset addieren, falls freies Bit in höherer Bitmap liegt)
+			free_bit = free_bit + i * VMEM_BITS_PER_BMWORD;
 			break;
 		}
 	}
@@ -490,14 +496,21 @@ int search_bitmap(void){
 // Hilfsfunktion zur Ermittlung einer freien Stelle in der Speicherbitmap
 int find_free_bit(Bmword bmword, Bmword mask){
 	int bit = VOID_IDX;
-	Bmword bitmask = 1; // Mask bmword 
+
+	// Vergleichsmaske initialisieren
+	Bmword bitmask = 1;
+
+	// Obere Begrenzung im Bitstring setzen
 	bmword |= mask;
+
 	for(bit = 0; bit < VMEM_BITS_PER_BMWORD; bit++) {
+		// wird ein Bit mit dem Wert 0 im Bitstring von bmword gefunden == freier Platz
 		if(!(bmword & bitmask)) {
 			break;
 		}
 		// end if 
-		bitmask <<= 1;
+		bitmask <<= 1; // sonst: "1" nach links weiterschieben
 	} // end for 
+	// Gefundenes Bit zurückgeben (doch, falls es über die Grenze des Bitstrings hinaus geht, wird VOID_IDX zurückgeben)
 	return bit < VMEM_BITS_PER_BMWORD ? bit : VOID_IDX;
 }
