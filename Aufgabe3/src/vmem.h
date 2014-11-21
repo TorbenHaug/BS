@@ -25,7 +25,7 @@ typedef unsigned int Bmword;    /* Frame bitmap */
 
 /* Sizes */
 #define VMEM_VIRTMEMSIZE 1024   /* Process address space / items */
-#define VMEM_PHYSMEMSIZE  256   /* Physical memory / items */
+#define VMEM_PHYSMEMSIZE  128   /* Physical memory / items */
 #define VMEM_PAGESIZE       8   /* Items per page */
 #define VMEM_NPAGES     (VMEM_VIRTMEMSIZE / VMEM_PAGESIZE)     /* Total number of pages */
 #define VMEM_NFRAMES 	(VMEM_PHYSMEMSIZE / VMEM_PAGESIZE)   /* Number of available frames */
