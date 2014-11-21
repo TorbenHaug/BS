@@ -5,4 +5,7 @@
  *      Author: torbenhaug
  */
 
+int main(int argc, const char* argv[]){
 
+	return 0;
+}
