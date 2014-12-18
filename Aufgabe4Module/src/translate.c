@@ -54,14 +54,22 @@ int trans_open(struct inode *dev_file, struct file *instance){
 		return -EBUSY;
 	}
 
-	deviceOpen++;
-
 	try_module_get(THIS_MODULE);
 	return 0;
 }
 int trans_close(struct inode *dev_file, struct file *instance){
 	printk(KERN_INFO "CLOSE: Translate Module wird verlassen\n");
-	deviceOpen--;
+	struct trans_dev *dev;
+	dev = container_of(dev_file->i_cdev, struct trans_dev, cdev);
+	instance->private_data = dev;
+	if((instance->f_flags & O_ACCMODE) == O_WRONLY && dev->writeOpened){
+		dev->writeOpened = 0;
+	}else if((instance->f_flags & O_ACCMODE) == O_RDONLY && dev->readOpened){
+		dev->readOpened = 0;
+	}else if((instance->f_flags & O_ACCMODE) == O_RDWR && dev->readOpened && dev->writeOpened){
+		dev->writeOpened = 0;
+		dev->readOpened = 0;
+	}
 	module_put(THIS_MODULE);
 	return 0;
 }
