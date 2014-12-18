@@ -8,8 +8,6 @@
 #ifndef SRC_CAESER_H_
 #define SRC_CAESER_H_
 	#define NELEMS(x)  ((sizeof(x) / sizeof(x[0])-1))
-	#include <stdio.h>
-	#include <stdlib.h>
 	/**
 	 * Char de-/encrypter.
 	 * This function will move one char on the filetable by a given number.

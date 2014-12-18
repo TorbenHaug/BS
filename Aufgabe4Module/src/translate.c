@@ -8,6 +8,33 @@
 
 struct trans_dev *trans_devices;
 
+int find_index(const char a[],const int size, const char value)
+{
+   int i = 0;
+   for (i=0; i<size; i++)
+   {
+	 if (a[i] == value)
+	 {
+	    return i;
+	 }
+   }
+   return(-1);
+}
+
+char caeser(char move_char, int shift){
+	int index = find_index(shift_table, NELEMS(shift_table), move_char);
+	if(index >= 0){
+
+		int new_index = (index + shift);
+		while (new_index<0){
+			new_index = new_index + NELEMS(shift_table);
+		}
+		new_index %= NELEMS(shift_table);
+		//printf("%d:%d:%d",index,new_index,shift);
+		move_char = shift_table[new_index];
+	}
+	return move_char;
+}
 
 int trans_open(struct inode *dev_file, struct file *instance){
 	printk(KERN_INFO "OPEN: Translate Module wird geoeffnet\n");
@@ -15,9 +42,12 @@ int trans_open(struct inode *dev_file, struct file *instance){
 		printk(KERN_WARNING "OPEN: Translate Module ist bereits geoeffnet\n");
 		return -EBUSY;
 	}
+	deviceOpen++;
 	sprintf(msg, "Hello from trans%d!\n", iminor(dev_file));
 	msg_Ptr = msg;
-	deviceOpen++;
+	struct trans_dev *dev;
+	dev = container_of(dev_file->i_cdev, struct trans_dev, cdev);
+	instance->private_data = dev;
 	try_module_get(THIS_MODULE);
 	return 0;
 }
@@ -28,22 +58,37 @@ int trans_close(struct inode *dev_file, struct file *instance){
 	return 0;
 }
 ssize_t trans_write(struct file *filp, const char __user *buf, size_t count, loff_t *f_pos){
-	printk(KERN_ALERT "WRITE: Sorry, this operation isn't supported.\n");
-	return -EINVAL;
+	printk(KERN_INFO "WRITE: Starte schreiben von %d Zeichen.\n", count);
+	struct trans_dev *dev = filp->private_data;
+	int bytes_written = 0;
+	for(bytes_written = 0; (bytes_written < count && dev->count < BUF_LEN); bytes_written++){
+		char tmp = *buf;
+		get_user(*(dev->p_in), buf++);
+		*dev->p_in = caeser(*dev->p_in,dev->shift);
+		dev->p_in++;
+		dev->count++;
+
+		//printk(KERN_INFO "WRITE: schreibe zeichen %d\n", bytes_written + 1);
+		if(((dev->p_in - dev->data) % BUF_LEN) == 0){
+			dev->p_in = dev->data;
+		}
+	}
+	printk(KERN_INFO "WRITE: %d konnten nicht geschrieben werden", count - bytes_written);
+	return bytes_written;
 }
 
 ssize_t trans_read(struct file *filp, char __user *buf, size_t count, loff_t *f_pos){
 	int bytes_read = 0;
-
+	struct trans_dev *dev = filp->private_data;
 	printk(KERN_INFO "READ: Start reading.");
 
-	if (*msg_Ptr == 0){
-		return 0;
-	}
-
-	while (count && *msg_Ptr) {
-		put_user(*(msg_Ptr++), buf++);
+	while (count && dev->count) {
+		put_user(*(dev->p_out++), buf++);
 		count--;
+		if(((dev->p_out - dev->data) % BUF_LEN) == 0){
+			dev->p_out = dev->data;
+		}
+		dev->count--;
 		bytes_read++;
 	}
 
@@ -58,10 +103,15 @@ static void setup_cdev(struct trans_dev *dev, int index)
    cdev_init(&dev->cdev, &fops);
    dev->cdev.owner = THIS_MODULE;
    dev->cdev.ops = &fops;
+   dev->shift = (index ? -SHIFT : SHIFT);
    err = cdev_add (&dev->cdev, devno, 1);
    /* Fail gracefully if need be */
-   if (err)
+   if (err){
       printk(KERN_NOTICE "Error %d adding scull%d", err, index);
+   }
+   dev->p_in = dev->data;
+   dev->p_out = dev->data;
+   dev->count = 0;
 }
 
 static int __init translate_init(void){

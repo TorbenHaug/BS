@@ -7,8 +7,10 @@
 
 #ifndef SRC_TRANSLATE_H_
 #define SRC_TRANSLATE_H_
+	#include <linux/kernel.h>
 	#include <linux/version.h>
 	#include <linux/module.h>
+	#include <linux/moduleparam.h>
 	#include <linux/init.h>
 	#include <linux/fs.h>
 	#include <linux/cdev.h>
@@ -16,8 +18,11 @@
 	#include <linux/slab.h>
 	#include <linux/uaccess.h>
 
+	#define NELEMS(x)  ((sizeof(x) / sizeof(x[0])-1))
 	#define DEVICE_NAME "trans"
-	#define BUF_LEN 80
+	#define BUF_LEN 40
+	#define SHIFT 3
+	const char shift_table[] = {"ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz"};
 
 	static int major;
 	static dev_t trans_device;
@@ -25,7 +30,13 @@
 	static char msg[BUF_LEN];
 	static char *msg_Ptr;
 
+
 	static struct trans_dev{
+		char data[BUF_LEN];
+		char *p_in;
+		char *p_out;
+		int shift;
+		int count;
 		struct cdev cdev;
 	};
 
