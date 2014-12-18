@@ -27,8 +27,6 @@
 	static int major;
 	static dev_t trans_device;
 	static int deviceOpen = 0;
-	static char msg[BUF_LEN];
-	static char *msg_Ptr;
 
 
 	static struct trans_dev{
@@ -37,6 +35,8 @@
 		char *p_out;
 		int shift;
 		int count;
+		int readOpened;
+		int writeOpened;
 		struct cdev cdev;
 	};
 

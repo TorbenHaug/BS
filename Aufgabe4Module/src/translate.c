@@ -37,17 +37,25 @@ char caeser(char move_char, int shift){
 }
 
 int trans_open(struct inode *dev_file, struct file *instance){
+	struct trans_dev *dev;
 	printk(KERN_INFO "OPEN: Translate Module wird geoeffnet\n");
-	if (deviceOpen){
+	dev = container_of(dev_file->i_cdev, struct trans_dev, cdev);
+	instance->private_data = dev;
+	if((instance->f_flags & O_ACCMODE) == O_WRONLY && !dev->writeOpened){
+		dev->writeOpened = 1;
+	}else if((instance->f_flags & O_ACCMODE) == O_RDONLY && !dev->readOpened){
+		dev->readOpened = 1;
+	}else if((instance->f_flags & O_ACCMODE) == O_RDWR && !dev->readOpened && !dev->writeOpened){
+		dev->writeOpened = 1;
+		dev->readOpened = 1;
+	}
+	else{
 		printk(KERN_WARNING "OPEN: Translate Module ist bereits geoeffnet\n");
 		return -EBUSY;
 	}
+
 	deviceOpen++;
-	sprintf(msg, "Hello from trans%d!\n", iminor(dev_file));
-	msg_Ptr = msg;
-	struct trans_dev *dev;
-	dev = container_of(dev_file->i_cdev, struct trans_dev, cdev);
-	instance->private_data = dev;
+
 	try_module_get(THIS_MODULE);
 	return 0;
 }
@@ -104,6 +112,8 @@ static void setup_cdev(struct trans_dev *dev, int index)
    dev->cdev.owner = THIS_MODULE;
    dev->cdev.ops = &fops;
    dev->shift = (index ? -SHIFT : SHIFT);
+   dev->readOpened = 0;
+   dev->writeOpened = 0;
    err = cdev_add (&dev->cdev, devno, 1);
    /* Fail gracefully if need be */
    if (err){
