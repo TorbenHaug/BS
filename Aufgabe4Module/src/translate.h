@@ -24,7 +24,7 @@
 	#define DEVICE_NAME "trans"
 	#define BUF_LEN 40
 	#define SHIFT 3
-	#define READ_POSSIBLE (dev->count > 0 && count > 0)
+	#define READ_POSSIBLE (dev->count > 0)
 	#define WRITE_POSSIBLE (dev->count < buf_len)
 	const char shift_table[] = {"ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz"};
 	int buf_len = BUF_LEN;

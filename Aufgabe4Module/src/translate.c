@@ -107,7 +107,7 @@ ssize_t trans_read(struct file *filp, char __user *buf, size_t count, loff_t *f_
 	struct trans_dev *dev = filp->private_data;
 	printk(KERN_INFO "READ: Start reading.");
 
-	while (count && dev->count > 0) {
+	while (count) {
 		put_user(*(dev->p_out++), buf++);
 		count--;
 		if(((dev->p_out - dev->data) % BUF_LEN) == 0){
@@ -116,14 +116,15 @@ ssize_t trans_read(struct file *filp, char __user *buf, size_t count, loff_t *f_
 		dev->count--;
 		bytes_read++;
 		wake_up_interruptible(&dev->write_queue);
-		/*while(!READ_POSSIBLE){
+		printk(KERN_INFO "Noch zu lesende Zeichen: %d\n", count);
+		while(!READ_POSSIBLE){
 			if(filp->f_flags&O_NONBLOCK){
 				return -EAGAIN;
 			}
 			if(wait_event_interruptible(dev->read_queue,READ_POSSIBLE)){
 				return -ERESTARTSYS;
 			}
-		}*/
+		}
 
 	}
 
