@@ -27,6 +27,8 @@
 	#define SHIFT 3
 	#define READ_POSSIBLE (dev->count > 0)
 	#define WRITE_POSSIBLE (dev->count < buf_len)
+
+ 	// A table of chars, which are being shifted by caesar encryption
 	const char shift_table[] = {"ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz"};
 	int buf_len = BUF_LEN;
 	int shift_size = SHIFT;
@@ -34,7 +36,7 @@
 	static int major;
 	static dev_t trans_device;
 
-	static struct trans_dev{
+	static struct trans_dev {
 		char data[BUF_LEN];
 		char *p_in;
 		char *p_out;

@@ -1,7 +1,7 @@
 /**
- * Translate (Caeser encryption) Module for Linuxkernel.
- * There will be added two devices to your dev folder: /dev/trans0, /dev/trans1
- * trans0 will encrypt a given chararray and trans0 will decrypt it.
+ * Translate (Caesar encryption) Module for Linuxkernel.
+ * Two devices will be to your dev folder: /dev/trans0, /dev/trans1
+ * trans0 will encrypt a given char array and trans1 will decrypt it.
  */
 
 #include "translate.h"
@@ -9,27 +9,35 @@
 struct trans_dev *trans_devices;
 
 /**
-	Finds the index of a character in an array of characters.
-*/
-int find_index(const char a[],const int size, const char value)
+ * Returns the index of a given char <value> within the char array <a[]>.
+ * If <value> is not present, the function returns -1 .
+ */
+int find_index(const char a[], const int size, const char value)
 {
-   int i = 0;
-   for (i=0; i<size; i++)
-   {
-	 if (a[i] == value)
-	 {
-	    return i;
-	 }
-   }
-   return(-1);
+	int i = 0;
+	for (i=0; i<size; i++)
+	{
+		if (a[i] == value)
+		{
+			return i;
+		}
+	}
+	return(-1);
 }
 
-char caeser(char move_char, int shift){
+/**
+ * Shifts the char code of <move_char> by <shift> times,
+ * if <move_char> is present in <shift_table>. Otherwise <move_char> is not being shifted.
+ */
+char caesar(char move_char, int shift)
+{
+	// Fetch teh index of move_char
 	int index = find_index(shift_table, NELEMS(shift_table), move_char);
-	if(index >= 0){
-
+	if(index >= 0)
+	{
 		int new_index = (index + shift);
-		while (new_index<0){
+		while (new_index<0)
+		{
 			new_index = new_index + NELEMS(shift_table);
 		}
 		new_index %= NELEMS(shift_table);
@@ -40,32 +48,34 @@ char caeser(char move_char, int shift){
 }
 
 /**
-	Open event when the driver gets opened
-*/
-int trans_open(struct inode *dev_file, struct file *instance){
+ * Open event when the driver gets opened
+ */
+int trans_open(struct inode *dev_file, struct file *instance)
+{
 	struct trans_dev *dev;
 	printk(KERN_INFO "OPEN: Translate Module wird geoeffnet\n");
+
 	// Get device handle from class device
 	dev = container_of(dev_file->i_cdev, struct trans_dev, cdev);
 	instance->private_data = dev;
 	// Try to lock semaphore
-	if (down_interruptible(&dev->sem)){
+	if (down_interruptible(&dev->sem)) {
 		 return -ERESTARTSYS;
 	}
 
 	// Set flags depending on what mode the driver got opened with
 	// Write only mode
-	if((instance->f_flags & O_ACCMODE) == O_WRONLY && !dev->writeOpened){
+	if ((instance->f_flags & O_ACCMODE) == O_WRONLY && !dev->writeOpened){
 		dev->writeOpened = 1;
 	// Read only mode
-	}else if((instance->f_flags & O_ACCMODE) == O_RDONLY && !dev->readOpened){
+	} else if((instance->f_flags & O_ACCMODE) == O_RDONLY && !dev->readOpened){
 		dev->readOpened = 1;
-	// Read and write
-	}else if((instance->f_flags & O_ACCMODE) == O_RDWR && !dev->readOpened && !dev->writeOpened){
+	// Read and write mode
+	} else if((instance->f_flags & O_ACCMODE) == O_RDWR && !dev->readOpened && !dev->writeOpened){
 		dev->writeOpened = 1;
 		dev->readOpened = 1;
 	}
-	else{
+	else {
 		// Unknown mode for this module or the requested mode is already used.
 		printk(KERN_WARNING "OPEN: Translate Module ist bereits geoeffnet\n");
 		return -EBUSY;
@@ -79,9 +89,10 @@ int trans_open(struct inode *dev_file, struct file *instance){
 }
 
 /**
-	Close event for driver file
-*/
-int trans_close(struct inode *dev_file, struct file *instance){
+ * Close event for driver file
+ */
+int trans_close(struct inode *dev_file, struct file *instance)
+{
 	printk(KERN_INFO "CLOSE: Translate Module wird verlassen\n");
 	struct trans_dev *dev;
 	// Get device handle from file
@@ -103,16 +114,17 @@ int trans_close(struct inode *dev_file, struct file *instance){
 }
 
 /**
-	When someone writes to the driver file
-*/
-ssize_t trans_write(struct file *filp, const char __user *buf, size_t count, loff_t *f_pos){
+ * When someone writes to the driver file
+ */
+ssize_t trans_write(struct file *filp, const char __user *buf, size_t count, loff_t *f_pos)
+{
 	printk(KERN_INFO "WRITE: Starte schreiben von %d Zeichen.\n", count);
 	// Get device from driver file
 	struct trans_dev *dev = filp->private_data;
 	int bytes_written = 0;
 	// Writeloop for required bytes to write
 	for(bytes_written = 0; (bytes_written < count); bytes_written++){
-		// Check for condition variable to be sure we can write (e.g. buffer is full so we'd have to wait)
+		// Check for condition variable to be sure we can write (e.g. buffer is full, so we'd have to wait)
 		if(!WRITE_POSSIBLE){
 			// IF we should not block error out as we're forced to block
 			if(filp->f_flags&O_NONBLOCK){
@@ -130,7 +142,7 @@ ssize_t trans_write(struct file *filp, const char __user *buf, size_t count, lof
 		// Get character from userspace into kernelspace
 		get_user(*(dev->p_in), buf++);
 		// Shift character
-		*dev->p_in = caeser(*dev->p_in,dev->shift);
+		*dev->p_in = caesar(*dev->p_in,dev->shift);
 		// Move to empty character
 		dev->p_in++;
 		// Increase count of buffered characters
@@ -150,9 +162,10 @@ ssize_t trans_write(struct file *filp, const char __user *buf, size_t count, lof
 }
 
 /**
-	When someone reads from the driver file
-*/
-ssize_t trans_read(struct file *filp, char __user *buf, size_t count, loff_t *f_pos){
+ * When someone reads from the driver file
+ */
+ssize_t trans_read(struct file *filp, char __user *buf, size_t count, loff_t *f_pos)
+{
 	int bytes_read = 0;
 	// Get device from file handle
 	struct trans_dev *dev = filp->private_data;
@@ -193,8 +206,8 @@ ssize_t trans_read(struct file *filp, char __user *buf, size_t count, loff_t *f_
 }
 
 /**
-	Setup of character device
-*/
+ * Setup of character device
+ */
 static void setup_cdev(struct trans_dev *dev, int index)
 {
    // Sets the device number that we got from the kernel
@@ -229,9 +242,10 @@ static void setup_cdev(struct trans_dev *dev, int index)
 }
 
 /**
-	Init module method
-*/
-static int __init translate_init(void){
+ * Init module method
+ */
+static int __init translate_init(void)
+{
 	printk(KERN_INFO "INIT: Translate Module wird hinzugefuegt\n");
 	int i;
 	// Try and get region for drivers
@@ -262,9 +276,10 @@ static int __init translate_init(void){
 }
 
 /**
-	Module exit method
-*/
-static void translate_exit(void){
+ * Module exit method
+ */
+static void translate_exit(void)
+{
 	printk(KERN_INFO "EXIT: Translate Module wird entfernt\n");
 	int i;
 	
@@ -293,4 +308,3 @@ module_param(buf_len, int, S_IRUGO);
 module_param(shift_size, int, S_IRUGO);
 MODULE_PARM_DESC(buf_len, "Internal buffer size");
 MODULE_PARM_DESC(shift_size, "Internal shift size");
-
