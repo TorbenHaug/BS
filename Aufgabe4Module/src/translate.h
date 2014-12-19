@@ -18,6 +18,7 @@
 	#include <linux/slab.h>
 	#include <linux/uaccess.h>
 	#include <linux/sched.h>
+	#include <linux/mutex.h>
 
 
 	#define NELEMS(x)  ((sizeof(x) / sizeof(x[0])-1))
@@ -43,6 +44,7 @@
 		int writeOpened;
 		wait_queue_head_t read_queue;
 		wait_queue_head_t write_queue;
+		struct semaphore sem;
 		struct cdev cdev;
 	};
 
@@ -59,7 +61,6 @@
 
 	static struct file_operations fops = {
 		.owner =    THIS_MODULE,
-		//.ioctl = 	trans_ioctl,
 	    .read =     trans_read,
 	    .write =    trans_write,
 	    .open =     trans_open,

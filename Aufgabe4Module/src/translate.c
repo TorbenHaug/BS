@@ -41,6 +41,10 @@ int trans_open(struct inode *dev_file, struct file *instance){
 	printk(KERN_INFO "OPEN: Translate Module wird geoeffnet\n");
 	dev = container_of(dev_file->i_cdev, struct trans_dev, cdev);
 	instance->private_data = dev;
+	if (down_interruptible(&dev->sem)){
+		 return -ERESTARTSYS;
+	}
+
 	if((instance->f_flags & O_ACCMODE) == O_WRONLY && !dev->writeOpened){
 		dev->writeOpened = 1;
 	}else if((instance->f_flags & O_ACCMODE) == O_RDONLY && !dev->readOpened){
@@ -55,6 +59,7 @@ int trans_open(struct inode *dev_file, struct file *instance){
 	}
 
 	try_module_get(THIS_MODULE);
+	up(&(dev->sem));
 	return 0;
 }
 int trans_close(struct inode *dev_file, struct file *instance){
@@ -78,6 +83,14 @@ ssize_t trans_write(struct file *filp, const char __user *buf, size_t count, lof
 	struct trans_dev *dev = filp->private_data;
 	int bytes_written = 0;
 	for(bytes_written = 0; (bytes_written < count); bytes_written++){
+		if(!WRITE_POSSIBLE){
+			if(filp->f_flags&O_NONBLOCK){
+				return -EAGAIN;
+			}
+			if(wait_event_interruptible(dev->write_queue,WRITE_POSSIBLE)){
+				return -ERESTARTSYS;
+			}
+		}
 		char tmp = *buf;
 		get_user(*(dev->p_in), buf++);
 		*dev->p_in = caeser(*dev->p_in,dev->shift);
@@ -89,14 +102,6 @@ ssize_t trans_write(struct file *filp, const char __user *buf, size_t count, lof
 			dev->p_in = dev->data;
 		}
 		wake_up_interruptible(&dev->read_queue);
-		while(!WRITE_POSSIBLE){
-			if(filp->f_flags&O_NONBLOCK){
-				return -EAGAIN;
-			}
-			if(wait_event_interruptible(dev->write_queue,WRITE_POSSIBLE)){
-				return -ERESTARTSYS;
-			}
-		}
 	}
 	printk(KERN_INFO "WRITE: %d konnten nicht geschrieben werden\n", count - bytes_written);
 	return bytes_written;
@@ -108,6 +113,14 @@ ssize_t trans_read(struct file *filp, char __user *buf, size_t count, loff_t *f_
 	printk(KERN_INFO "READ: Start reading.");
 
 	while (count) {
+		if(!READ_POSSIBLE){
+			if(filp->f_flags&O_NONBLOCK){
+				return -EAGAIN;
+			}
+			if(wait_event_interruptible(dev->read_queue,READ_POSSIBLE)){
+				return -ERESTARTSYS;
+			}
+		}
 		put_user(*(dev->p_out++), buf++);
 		count--;
 		if(((dev->p_out - dev->data) % BUF_LEN) == 0){
@@ -117,15 +130,6 @@ ssize_t trans_read(struct file *filp, char __user *buf, size_t count, loff_t *f_
 		bytes_read++;
 		wake_up_interruptible(&dev->write_queue);
 		printk(KERN_INFO "Noch zu lesende Zeichen: %d\n", count);
-		while(!READ_POSSIBLE){
-			if(filp->f_flags&O_NONBLOCK){
-				return -EAGAIN;
-			}
-			if(wait_event_interruptible(dev->read_queue,READ_POSSIBLE)){
-				return -ERESTARTSYS;
-			}
-		}
-
 	}
 
 	return bytes_read;
@@ -144,6 +148,7 @@ static void setup_cdev(struct trans_dev *dev, int index)
    dev->writeOpened = 0;
    init_waitqueue_head(&dev->read_queue);
    init_waitqueue_head(&dev->write_queue);
+   sema_init(&(dev->sem),1);
    err = cdev_add (&dev->cdev, devno, 1);
    /* Fail gracefully if need be */
    if (err){
