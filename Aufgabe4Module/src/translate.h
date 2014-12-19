@@ -17,17 +17,21 @@
 	#include <linux/device.h>
 	#include <linux/slab.h>
 	#include <linux/uaccess.h>
+	#include <linux/sched.h>
+
 
 	#define NELEMS(x)  ((sizeof(x) / sizeof(x[0])-1))
 	#define DEVICE_NAME "trans"
 	#define BUF_LEN 40
 	#define SHIFT 3
+	#define READ_POSSIBLE (dev->count > 0 && count > 0)
+	#define WRITE_POSSIBLE (dev->count < buf_len)
 	const char shift_table[] = {"ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz"};
+	int buf_len = BUF_LEN;
+	int shift_size = SHIFT;
 
 	static int major;
 	static dev_t trans_device;
-	static int deviceOpen = 0;
-
 
 	static struct trans_dev{
 		char data[BUF_LEN];
@@ -37,6 +41,8 @@
 		int count;
 		int readOpened;
 		int writeOpened;
+		wait_queue_head_t read_queue;
+		wait_queue_head_t write_queue;
 		struct cdev cdev;
 	};
 

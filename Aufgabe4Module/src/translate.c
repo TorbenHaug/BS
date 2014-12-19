@@ -77,19 +77,28 @@ ssize_t trans_write(struct file *filp, const char __user *buf, size_t count, lof
 	printk(KERN_INFO "WRITE: Starte schreiben von %d Zeichen.\n", count);
 	struct trans_dev *dev = filp->private_data;
 	int bytes_written = 0;
-	for(bytes_written = 0; (bytes_written < count && dev->count < BUF_LEN); bytes_written++){
+	for(bytes_written = 0; (bytes_written < count); bytes_written++){
 		char tmp = *buf;
 		get_user(*(dev->p_in), buf++);
 		*dev->p_in = caeser(*dev->p_in,dev->shift);
 		dev->p_in++;
 		dev->count++;
 
-		//printk(KERN_INFO "WRITE: schreibe zeichen %d\n", bytes_written + 1);
+		printk(KERN_INFO "WRITE: schreibe zeichen %d\n", bytes_written + 1);
 		if(((dev->p_in - dev->data) % BUF_LEN) == 0){
 			dev->p_in = dev->data;
 		}
+		wake_up_interruptible(&dev->read_queue);
+		while(!WRITE_POSSIBLE){
+			if(filp->f_flags&O_NONBLOCK){
+				return -EAGAIN;
+			}
+			if(wait_event_interruptible(dev->write_queue,WRITE_POSSIBLE)){
+				return -ERESTARTSYS;
+			}
+		}
 	}
-	printk(KERN_INFO "WRITE: %d konnten nicht geschrieben werden", count - bytes_written);
+	printk(KERN_INFO "WRITE: %d konnten nicht geschrieben werden\n", count - bytes_written);
 	return bytes_written;
 }
 
@@ -98,7 +107,7 @@ ssize_t trans_read(struct file *filp, char __user *buf, size_t count, loff_t *f_
 	struct trans_dev *dev = filp->private_data;
 	printk(KERN_INFO "READ: Start reading.");
 
-	while (count && dev->count) {
+	while (count && dev->count > 0) {
 		put_user(*(dev->p_out++), buf++);
 		count--;
 		if(((dev->p_out - dev->data) % BUF_LEN) == 0){
@@ -106,6 +115,16 @@ ssize_t trans_read(struct file *filp, char __user *buf, size_t count, loff_t *f_
 		}
 		dev->count--;
 		bytes_read++;
+		wake_up_interruptible(&dev->write_queue);
+		/*while(!READ_POSSIBLE){
+			if(filp->f_flags&O_NONBLOCK){
+				return -EAGAIN;
+			}
+			if(wait_event_interruptible(dev->read_queue,READ_POSSIBLE)){
+				return -ERESTARTSYS;
+			}
+		}*/
+
 	}
 
 	return bytes_read;
@@ -122,6 +141,8 @@ static void setup_cdev(struct trans_dev *dev, int index)
    dev->shift = (index ? -SHIFT : SHIFT);
    dev->readOpened = 0;
    dev->writeOpened = 0;
+   init_waitqueue_head(&dev->read_queue);
+   init_waitqueue_head(&dev->write_queue);
    err = cdev_add (&dev->cdev, devno, 1);
    /* Fail gracefully if need be */
    if (err){
@@ -177,4 +198,8 @@ module_exit(translate_exit);
 //Metainformationen
 MODULE_AUTHOR("Tim Hartig, Tim Hagemann, Torben Haug");
 MODULE_LICENSE("GPL");
+module_param(buf_len, int, S_IRUGO);
+module_param(shift_size, int, S_IRUGO);
+MODULE_PARM_DESC(buf_len, "Internal buffer size");
+MODULE_PARM_DESC(shift_size, "Internal shift size");
 
