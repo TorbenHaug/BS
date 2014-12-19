@@ -7,11 +7,12 @@
 #include "caeser.h"
 
 /**
- * table for shifting
+ * table of chars which are being shifted by using caeser.
+ * Chars not included in <shift_table[]> are not being encrypted by caeser.
  */
 const char shift_table[] = {"ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz"};
 
-int find_index(const char a[],const int size, const char value)
+int find_index(const char a[], const int size, const char value)
 {
    int i = 0;
    for (i=0; i<size; i++)
@@ -23,6 +24,11 @@ int find_index(const char a[],const int size, const char value)
    }
    return(-1);
 }
+
+/**
+ * Shifts the char code of each char within <move_char> by <shift> times.
+ * <shift> allows negative values for backshifting (decryption purpose).
+ */
 
 char caeser(char move_char, int shift){
 	int index = find_index(shift_table, NELEMS(shift_table), move_char);
