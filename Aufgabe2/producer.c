@@ -20,17 +20,17 @@ void* producer(void *pid, pthread_cond_t *restart, int *prod_stopped, char begin
 	while(1)
 	{
 		i++;
-		// naechstes zu schreibendes Zeichen
+		// Naechstes zu schreibendes Zeichen
 		z_var++;
 		// Zirkel garantieren: 'a' = 97, 'z' = 122
 		if (z_var > end){
 			z_var = beginn;
 		}
-		//mutex locken
+		// Mutex locken
 		pthread_testcancel();
 		pthread_mutex_lock(&rb_mutex);
 
-		//prüfen, ob der Speicher voll ist, oder ob der producer angehalten ist
+		// prüfen, ob der Speicher voll ist, oder ob der Producer angehalten wurde
 		while((p_rb -> p_in == p_rb -> p_out && p_rb -> count == MAX) || *prod_stopped)
 		{
 			// prüfen, welche von beiden bedingungen zutrifft
@@ -51,7 +51,7 @@ void* producer(void *pid, pthread_cond_t *restart, int *prod_stopped, char begin
 			}
 		}
 
-		// in den puffer Schreiben
+		// in den Puffer schreiben
 		if (verbose)
 				printf("Producer %d: Added sign '%c' to Ringbuffer.\n", *(int*)pid, z_var);
 		//printf("lege in puffer: %c", z_var);
@@ -63,7 +63,7 @@ void* producer(void *pid, pthread_cond_t *restart, int *prod_stopped, char begin
 		{
 			p_rb -> p_in = p_start;
 		}
-		// belegung des Puffers erhöhen
+		// Belegung des Puffers erhöhen
 		(p_rb -> count)++;
 		//printf("Producer : %d: added '%c' to the buffer.", *(int*)pid, z_var);
 		// Signal an den Consumer, dass der Puffer gefüllt ist
@@ -73,7 +73,7 @@ void* producer(void *pid, pthread_cond_t *restart, int *prod_stopped, char begin
 		}
 		// Mutex freigeben
 		pthread_mutex_unlock(&rb_mutex);
-		// Thread 3 Secunden anhalten
+		// Thread 3 Sekunden anhalten
 		sleep(*sleep_time);
 	}
 	return NULL;
